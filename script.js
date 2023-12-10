@@ -1,4 +1,3 @@
-// alert("not responsive at so see the page in landscape on phones");
 const design_card_butttons = document.querySelectorAll('.design-card');
 const introduction_text = document.querySelectorAll('.introduction-text');
 
