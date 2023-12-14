@@ -1,3 +1,4 @@
+// alert("not responsive at so see the page in landscape on phones");
 const design_card_butttons = document.querySelectorAll('.design-card');
 const introduction_text = document.querySelectorAll('.introduction-text');
 
@@ -18,14 +19,14 @@ design_card_butttons.forEach((button, index) => {
                 btn.classList.add('active');
             } else {
                 btn.classList.remove('active');
-                
+
             }
         });
     });
 });
 
 single_profile_card.forEach((btn, index) => {
-    btn.addEventListener('click', ()=> {
+    btn.addEventListener('click', () => {
         testimonial_card.forEach((testimonialCard, testimonialCardIndex) => {
             if (index === testimonialCardIndex) {
                 testimonialCard.style.display = 'block';
@@ -42,6 +43,8 @@ single_profile_card.forEach((btn, index) => {
         });
     });
 });
+
+
 
 
 

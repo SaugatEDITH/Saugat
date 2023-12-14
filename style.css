@@ -49,6 +49,7 @@ p {
   margin: 15px 0 20px 0;
 }
 
+
 .section-p1 {
   padding: 40px 80px;
 }
@@ -144,7 +145,7 @@ body::selection {
   color: #fefefe;
   font-family: "Raleway", sans-serif;
   font-size: 24px;
-}
+}             
 .title-first-name>a{
   text-decoration: none;
   color: #FEFEFE;
@@ -180,6 +181,10 @@ body::selection {
   font-size: 12px;
   font-weight: 600;
   transition: 0.3s ease;
+}
+
+.navbar-menu li a.active-page {
+  color: green;
 }
 
 .navbar-menu li a:hover {

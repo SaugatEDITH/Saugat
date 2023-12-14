@@ -24,7 +24,8 @@
 </head>
 
 <body>
-    <i class="ri-menu-line"></i>
+    <i class="ri-menu-line saikripa"></i>
+
     <section id="header" class="">
 
 
@@ -34,12 +35,12 @@
             </h3>
 
         </div>
-        <div>
+        <div class="navbar-menu-container">
             <ul class="navbar-menu">
-                <li><a class="profile-card-active" href="#aboutme"> About </a></li>
-                <li><a class="profile-card-active" href="#introduction">Works</a></li>
-                <li><a class="profile-card-active" href="#skill">Skills</a></li>
-                <li><a class="profile-card-active" href="#footer">Contacts</a></li>
+                <li><a class="profile-card-active a-navlink " href="#aboutme"> About </a></li>
+                <li><a class="profile-card-active a-navlink" href="#introduction">Works</a></li>
+                <li><a class="profile-card-active a-navlink" href="#skill">Skills</a></li>
+                <li><a class="profile-card-active a-navlink" href="#footer">Contacts</a></li>
             </ul>
         </div>
         <div>
@@ -70,6 +71,7 @@
                     <p>Security Enthusiast</p>
                 </div>
                 <div class="body-title">
+                    <!--Any fool can write code that a computer can understand. Good programmers write code that humans can understand.-->
                     <!-- <h1>Talk is cheap<br>Show me the code</h1> -->
                     <h1> HI ,I AM SAUGAT<br><span id="element"></span> </h1>
                     <p>Crafting a Secure and User-Centric Digital Tomorrow</p>
@@ -349,13 +351,20 @@
     </script>
 
     <script>
+
+
         document.querySelector(".ri-menu-line").addEventListener("click", function (e) {
             document.querySelector("#header").classList.toggle("open");
             e.target.classList.toggle("ri-menu-line");
             e.target.classList.toggle("ri-close-line");
         });
-
-
+        document.querySelectorAll(".a-navlink").forEach((a) => {
+            a.addEventListener('click', () => {
+                document.querySelector("#header").classList.toggle("open");
+                document.querySelector(".ri-close-line").classList.toggle("ri-close-line");
+                document.querySelector(".saikripa").classList.add("ri-menu-line");
+            })
+        })
     </script>
 </body>
 <script src="script.js"></script>
