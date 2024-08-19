@@ -293,6 +293,7 @@ body::selection {
   color: #cacaca;
   font-weight: 500;
   line-height: 25px;
+  text-align:justify
 }
 
 .body-title a {
