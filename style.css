@@ -867,8 +867,9 @@ body::selection {
 
   .body-title p {
     font-weight: 200;
-    text-align: center;
+    text-align: justify;
     width: 100%;
+    
   }
 
   .body-title a {
