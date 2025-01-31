@@ -20,10 +20,30 @@
     <title>Saugat</title>
     <script src="https://kit.fontawesome.com/e674bba739.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
-
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <style>
+        #hexagon-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+        #cybersec-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+    </style>
 </head>
 
 <body>
+    <canvas id="hexagon-canvas"></canvas>
+    <canvas id="cybersec-canvas"></canvas>
     <i class="ri-menu-line saikripa"></i>
 
     <section id="header" class="">
@@ -350,22 +370,110 @@
         });
     </script>
 
-    <script>
+<script>
+    document.querySelector(".ri-menu-line").addEventListener("click", function (e) {
+        document.querySelector("#header").classList.toggle("open");
+        e.target.classList.toggle("ri-menu-line");
+        e.target.classList.toggle("ri-close-line");
+    });
 
-
-        document.querySelector(".ri-menu-line").addEventListener("click", function (e) {
+    document.querySelectorAll(".a-navlink").forEach((a) => {
+        a.addEventListener('click', () => {
             document.querySelector("#header").classList.toggle("open");
-            e.target.classList.toggle("ri-menu-line");
-            e.target.classList.toggle("ri-close-line");
+            document.querySelector(".ri-close-line").classList.toggle("ri-close-line");
+            document.querySelector(".saikripa").classList.add("ri-menu-line");
         });
-        document.querySelectorAll(".a-navlink").forEach((a) => {
-            a.addEventListener('click', () => {
-                document.querySelector("#header").classList.toggle("open");
-                document.querySelector(".ri-close-line").classList.toggle("ri-close-line");
-                document.querySelector(".saikripa").classList.add("ri-menu-line");
-            })
-        })
-    </script>
+    });
+
+    // Three.js CyberSec Background
+    const canvas = document.getElementById('cybersec-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 50;
+
+    // Hexagon Grid Setup
+    const hexagonGeometry = new THREE.CircleGeometry(1, 6);
+    const hexagonMaterial = new THREE.MeshBasicMaterial({ color: 0x00b840, wireframe: true }); // Default hacker green
+    const hexagonGrid = new THREE.Group();
+
+    const hexagonRadius = 2.2;
+    const hexagonHeight = Math.sqrt(3) * hexagonRadius;
+
+    for (let x = -10; x < 10; x++) {
+        for (let y = -10; y < 10; y++) {
+            const hexagon = new THREE.Mesh(hexagonGeometry, hexagonMaterial);
+            hexagon.position.x = x * hexagonRadius * 1.5;
+            hexagon.position.y = y * hexagonHeight + (x % 2) * hexagonHeight / 2;
+            hexagonGrid.add(hexagon);
+        }
+    }
+
+    scene.add(hexagonGrid);
+
+    // Background Particles (CyberSec Floating Dots)
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCount = 5000;
+    const posArray = new Float32Array(particlesCount * 3);
+
+    for (let i = 0; i < particlesCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 200;
+    }
+
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+    const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.5,
+        color: 0x00ff00, // Green glow effect
+        transparent: true,
+        blending: THREE.AdditiveBlending
+    });
+
+    const particlesMesh = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particlesMesh);
+
+    function animate() {
+        requestAnimationFrame(animate);
+
+        // Rotate Hexagon Grid
+        hexagonGrid.rotation.y += 0.002;
+
+        // Rotate Floating Particles
+        particlesMesh.rotation.y += 0.002;
+
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    // Mouse Interaction - Subtle Glow Effect
+    document.addEventListener('mousemove', (event) => {
+        const mouseX = (event.clientX / window.innerWidth) * 2 - 1;
+        const mouseY = -(event.clientY / window.innerHeight) * 2 + 1;
+        hexagonGrid.rotation.x = mouseY * 0.5;
+        hexagonGrid.rotation.y = mouseX * 0.5;
+
+        // Subtle glow effect when hovering over hexagons
+        hexagonGrid.children.forEach(hexagon => {
+            const distance = Math.sqrt(Math.pow(mouseX * 20 - hexagon.position.x, 2) + Math.pow(mouseY * 20 - hexagon.position.y, 2));
+            if (distance < 3) {
+                hexagon.material.color.set(0x00ff55); // Slightly brighter green on hover
+            } else {
+                hexagon.material.color.set(0x00b840); // Default cyber green
+            }
+        });
+    });
+
+    // Resize Handling
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+
 </body>
 <script src="script.js"></script>
 </body>
