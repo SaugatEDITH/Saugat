@@ -44,31 +44,102 @@ single_profile_card.forEach((btn, index) => {
     });
 });
 
+// Select form and elements
+const form = document.getElementById("contactForm");
+const name = document.getElementById("name");
+const email = document.getElementById("email");
+const phone = document.getElementById("phone-number");
 
-document.getElementById("contactForm").addEventListener("submit", function(event) {
-    event.preventDefault(); // Prevent page refresh
+// Function to display error message and style input
+function showError(inputField, message) {
+    const responseDiv = document.getElementById("responseMessage");
+    responseDiv.textContent = message;  // Show error in the response div
+    inputField.style.border = "2px solid red";  // Add red border to the input field
+}
 
-    let form = event.target;
-    let formData = new FormData(form);
+// Function to remove error message and reset input style
+function removeError(inputField) {
+    const responseDiv = document.getElementById("responseMessage");
+    responseDiv.textContent = "";  // Clear the response div
+    inputField.style.border = "";  // Reset the input field border
+}
 
-    fetch("https://formspree.io/f/xbjvnarq", {
-        method: "POST",
-        body: formData,
-        headers: { "Accept": "application/json" }
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.ok) {
-            document.getElementById("responseMessage").innerHTML = "<p style='color:#00f56c;'>Message sent successfully!</p>";
-            form.reset(); // Clear form after success
-        } else {
-            document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error sending message. Try again.</p>";
-        }
-    })
-    .catch(error => {
-        document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
-    });
+// Validate Name
+function validateName() {
+    const nameValue = name.value.trim();
+    if (nameValue.length < 3) {
+        showError(name, "Name must be at least 3 characters.");
+        return false;
+    } else {
+        removeError(name);
+        return true;
+    }
+}
+
+// Validate Email
+function validateEmail() {
+    const emailValue = email.value.trim();
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(emailValue)) {
+        showError(email, "Please enter a valid email address.");
+        return false;
+    } else {
+        removeError(email);
+        return true;
+    }
+}
+
+// Validate Phone Number
+function validatePhone() {
+    const phoneValue = phone.value.trim();
+    const phonePattern = /^(97|98)\d{7,8}$/;
+    if (!phonePattern.test(phoneValue)) {
+        showError(phone, "Please enter a valid phone number.");
+        return false;
+    } else {
+        removeError(phone);
+        return true;
+    }
+}
+
+// Add `onblur` event listeners for real-time validation
+name.addEventListener("blur", validateName);
+email.addEventListener("blur", validateEmail);
+phone.addEventListener("blur", validatePhone);
+
+// Optional: Real-time validation on input for user experience
+name.addEventListener("input", removeError.bind(null, name));
+email.addEventListener("input", removeError.bind(null, email));
+phone.addEventListener("input", removeError.bind(null, phone));
+
+// Validate All Fields on Submit
+form.addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent form submission if validation fails
+
+    const isNameValid = validateName();
+    const isEmailValid = validateEmail();
+    const isPhoneValid = validatePhone();
+
+    if (isNameValid && isEmailValid && isPhoneValid) {
+        // Form is valid, submit data
+        let formData = new FormData(form);
+
+        fetch("https://formspree.io/f/xbjvnarq", {
+            method: "POST",
+            body: formData,
+            headers: { "Accept": "application/json" }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.ok) {
+                document.getElementById("responseMessage").innerHTML = "<p style='color:#00f56c;'>Message sent successfully!</p>";
+                form.reset(); // Clear form after success
+            } else {
+                document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error sending message. Try again.</p>";
+            }
+        })
+        .catch(error => {
+            document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
+        });
+    }
 });
-
-
-

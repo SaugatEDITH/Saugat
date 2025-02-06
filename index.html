@@ -20,7 +20,6 @@
     <script src="https://kit.fontawesome.com/e674bba739.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="style.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://unpkg.com/htmx.org@1.9.5"></script>
     <style>
         #hexagon-canvas {
             position: fixed;
@@ -305,16 +304,16 @@
                         
                         <h2>Start by <span>saying hi</span></h2>
                         
-                        <input title="Enter valid name!" pattern="[A-Za-z]{3,}(?:\s[A-Za-z]+){0,2}" type="text" name="name" id="" placeholder="Your name" required>
-                        <input title="Enter valid email!" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" type="email" name="email" id="" placeholder="Email Address" required>
+                        <input title="Enter valid name!" pattern="[A-Za-z]{3,}(?:\s[A-Za-z]+){0,2}" type="text" name="name" id="name" placeholder="Your name" required>
+                        <input title="Enter valid email!" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" type="email" name="email" id="email" placeholder="Email Address" required>
                         <div>
-                            <input title="Enter valid phone number!" type="tel" name="phone-number" id="" placeholder="Phone number" pattern="(97|98)\d{7,8}" required>
+                            <input title="Enter valid phone number!" type="tel" name="phone-number" id="phone-number" placeholder="Phone number" pattern="(97|98)\d{7,8}" required>
                             <button type="submit">Send</button>
                         </div>
                     </form>
                     
                    
-                    <div id="responseMessage" style="height: 20px;"></div>
+                    <div id="responseMessage" style="color:red;height: 20px;"></div>
         </div>
         
         <div class="footer-title">
@@ -361,7 +360,7 @@
     </div>
 
     <!-- <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script> -->
-
+<script src="./script.js"></script>
     <!-- Load library from the CDN -->
     <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
 
