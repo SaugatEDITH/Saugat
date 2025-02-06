@@ -67,14 +67,19 @@ function removeError(inputField) {
 // Validate Name
 function validateName() {
     const nameValue = name.value.trim();
-    if (nameValue.length < 3) {
-        showError(name, "Name must be at least 3 characters.");
+
+    // Regex: The name should contain only letters (a-z, A-Z) and spaces. It should have at least 3 characters.
+    const namePattern = /^[A-Za-z\s]{3,}$/;
+
+    if (!namePattern.test(nameValue)) {
+        showError(name, "Enter valid name!");
         return false;
     } else {
         removeError(name);
         return true;
     }
 }
+
 
 // Validate Email
 function validateEmail() {
