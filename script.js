@@ -45,6 +45,30 @@ single_profile_card.forEach((btn, index) => {
 });
 
 
+document.getElementById("contactForm").addEventListener("submit", function(event) {
+    event.preventDefault(); // Prevent page refresh
+
+    let form = event.target;
+    let formData = new FormData(form);
+
+    fetch("https://formspree.io/f/xbjvnarq", {
+        method: "POST",
+        body: formData,
+        headers: { "Accept": "application/json" }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.ok) {
+            document.getElementById("responseMessage").innerHTML = "<p style='color:#00f56c;'>Message sent successfully!</p>";
+            form.reset(); // Clear form after success
+        } else {
+            document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error sending message. Try again.</p>";
+        }
+    })
+    .catch(error => {
+        document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
+    });
+});
 
 
 
