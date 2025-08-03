@@ -289,7 +289,7 @@ body::selection {
 .body-title p {
 
   font-size: 13px;
-  padding: 20px 0;
+  padding: 20px 10px;
   color: #cacaca;
   font-weight: 500;
   line-height: 25px;
