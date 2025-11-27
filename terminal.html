@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Saugat Terminal Portfolio</title>
+    <link rel="stylesheet" href="terminal-style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+    <canvas id="binary-canvas"></canvas>
+    
+    <div class="terminal-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2>PORTFOLIO COMMANDS</h2>
+            </div>
+            <div class="sidebar-content">
+                <div class="cmd-category">
+                    <h3>👤 Personal</h3>
+                    <a href="#" data-cmd="whoami">whoami</a>
+                    <a href="#" data-cmd="about">about</a>
+                    <a href="#" data-cmd="contact">contact</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>💼 Portfolio</h3>
+                    <a href="#" data-cmd="skills">skills</a>
+                    <a href="#" data-cmd="projects">projects</a>
+                    <a href="#" data-cmd="experience">experience</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>📁 Files</h3>
+                    <a href="#" data-cmd="ls">ls</a>
+                    <a href="#" data-cmd="tree">tree</a>
+                    <a href="#" data-cmd="cat README.md">cat README.md</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>🌐 Network</h3>
+                    <a href="#" data-cmd="ping google.com">ping google.com</a>
+                    <a href="#" data-cmd="curl github.com">curl github.com</a>
+                    <a href="#" data-cmd="ip a">ip a</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>💻 System</h3>
+                    <a href="#" data-cmd="date">date</a>
+                    <a href="#" data-cmd="uname -a">uname -a</a>
+                    <a href="#" data-cmd="pwd">pwd</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>🎮 Fun</h3>
+                    <a href="#" data-cmd="hack">hack</a>
+                    <a href="#" data-cmd="matrix">matrix</a>
+                    <a href="#" data-cmd="joke">joke</a>
+                    <a href="#" data-cmd="calc 2+2*3">calc 2+2*3</a>
+                </div>
+
+                <div class="cmd-category">
+                    <h3>⚙️ Utilities</h3>
+                    <a href="#" data-cmd="help">help</a>
+                    <a href="#" data-cmd="clear">clear</a>
+                    <a href="#" data-cmd="exit">exit</a>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <!-- Close button removed for cleaner look -->
+            </div>
+        </div>
+
+        <!-- Terminal -->
+        <div class="terminal-main">
+            <div class="terminal-header">
+                <div class="header-buttons">
+                    <span class="btn close"></span>
+                    <span class="btn minimize"></span>
+                    <span class="btn maximize"></span>
+                </div>
+                <div class="header-title">saugat@portfolio:~</div>
+            </div>
+            <div class="terminal-output" id="terminal-output">
+                <!-- Content will be added by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script src="terminal.js"></script>
+    <script src="binary-system.js"></script>
+</body>
+</html>
