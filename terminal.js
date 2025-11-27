@@ -11,7 +11,7 @@ class Terminal {
     }
 
     showWelcomeScreen() {
-        this.addLine('Copyright (C) 2024 Saugat Pokharel. All rights reserved.', 'copyright');
+        this.addLine(`Copyright (C) ${new Date().getFullYear()} Saugat Pokharel. All rights reserved.`, 'copyright');
         this.addLine('Welcome to Saugat\'s Terminal Portfolio v1.0', 'success');
         this.addLine('Type \'help\' to see all available commands', 'info');
         this.addLine('Click commands from sidebar or type directly to explore', 'warning');
