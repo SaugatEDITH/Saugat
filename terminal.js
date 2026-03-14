@@ -5,9 +5,16 @@ class Terminal {
         this.historyIndex = 0;
         this.currentDirectory = '/home/saugat';
         this.isSudo = false;
+        this.jokeCache = [];
+        this.jokeFetchInFlight = false;
+        this.lastJokeFetchAt = 0;
+        this.jokeBag = [];
+        this.jokePoolKey = '';
         this.setupSidebarCommands();
         this.showWelcomeScreen();
         this.setupKeyboardInput();
+
+        this.prefetchJokes();
     }
 
     getPrompt() {
@@ -190,7 +197,18 @@ class Terminal {
         const args = parts.slice(1).join(' ');
 
         if (cmd === 'sudo') {
-            this.handleSudo(parts.slice(1).join(' '));
+            const sudoArgs = parts.slice(1).join(' ');
+            const sudoParts = sudoArgs.split(' ');
+            const sudoCmd = (sudoParts[0] || '').toLowerCase();
+            const sudoCmdArgs = sudoParts.slice(1).join(' ');
+
+            this.handleSudo(sudoArgs);
+
+            const sudoIsAsync = (sudoCmd === 'rm' && sudoCmdArgs === '-rf /') || sudoCmd === 'reboot';
+            if (sudoIsAsync) {
+                return;
+            }
+
             // Add blank line and prompt after sudo
             this.addLine('', 'output');
             this.scrollToBottom();
@@ -203,11 +221,8 @@ class Terminal {
         } else if (cmd === 'nano') {
             this.handleNano(args);
             // Don't show prompt - NANO will handle it
-        } else if (cmd === 'ping') {
-            // Don't show prompt - ping will handle it when complete
-            this.commands[cmd].call(this, args);
-        } else if (cmd === 'hack') {
-            // Don't show prompt - hack will handle it when complete
+        } else if (cmd === 'ping' || cmd === 'hack' || cmd === 'curl' || cmd === 'matrix') {
+            // Don't show prompt - async commands handle it when complete
             this.commands[cmd].call(this, args);
         } else {
             const handler = this.commands[cmd];
@@ -248,6 +263,11 @@ class Terminal {
             setTimeout(() => {
                 this.addLine('Reboot complete!', 'success');
                 this.addLine('Welcome back!', 'info');
+                this.addLine('', 'output');
+                this.scrollToBottom();
+                this.createInputDisplay();
+                this.currentInput = '';
+                this.updateInputDisplay();
             }, 1000);
         } else if (cmd === 'passwd') {
             this.addLine('Changing password for saugat', 'warning');
@@ -455,7 +475,9 @@ class Terminal {
             this.addLine('Nice try though! This portfolio is indestructible.', 'info');
             this.addLine('', 'output');
             this.scrollToBottom();
-            // Don't call updateInputDisplay() here - let executeCommand handle it
+            this.createInputDisplay();
+            this.currentInput = '';
+            this.updateInputDisplay();
         }, 2000);
     }
 
@@ -479,6 +501,71 @@ class Terminal {
         setTimeout(() => {
             this.output.scrollTop = this.output.scrollHeight;
         }, 10);
+    }
+
+    prefetchJokes() {
+        const now = Date.now();
+        if (this.jokeFetchInFlight) return;
+        if (this.jokeCache.length >= 10) return;
+        if (now - this.lastJokeFetchAt < 60_000) return;
+
+        this.jokeFetchInFlight = true;
+        this.lastJokeFetchAt = now;
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 4000);
+
+        fetch('https://v2.jokeapi.dev/joke/Programming?type=single&amount=6', {
+            signal: controller.signal,
+            cache: 'no-store'
+        })
+            .then((r) => r.json())
+            .then((data) => {
+                const jokes = [];
+                if (data && Array.isArray(data.jokes)) {
+                    for (const j of data.jokes) {
+                        if (j && typeof j.joke === 'string' && j.joke.trim()) jokes.push(j.joke.trim());
+                    }
+                } else if (data && typeof data.joke === 'string' && data.joke.trim()) {
+                    jokes.push(data.joke.trim());
+                }
+
+                if (jokes.length) {
+                    const seen = new Set(this.jokeCache);
+                    for (const j of jokes) {
+                        if (!seen.has(j)) {
+                            this.jokeCache.push(j);
+                            seen.add(j);
+                        }
+                    }
+                    if (this.jokeCache.length > 30) {
+                        this.jokeCache = this.jokeCache.slice(-30);
+                    }
+                }
+            })
+            .catch(() => {
+                // ignore network/CORS errors
+            })
+            .finally(() => {
+                clearTimeout(timeoutId);
+                this.jokeFetchInFlight = false;
+            });
+    }
+
+    buildJokePool(localJokes) {
+        const unique = new Set([...(localJokes || []), ...(this.jokeCache || [])].map(j => (j || '').trim()).filter(Boolean));
+        return [...unique];
+    }
+
+    refillJokeBag(pool, poolKey) {
+        // Fisher–Yates shuffle
+        const arr = [...pool];
+        for (let i = arr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [arr[i], arr[j]] = [arr[j], arr[i]];
+        }
+        this.jokeBag = arr;
+        this.jokePoolKey = poolKey;
     }
 
     commands = {
@@ -582,12 +669,22 @@ class Terminal {
             if (!args) {
                 this.addLine('Usage: curl <website>', 'warning');
                 this.addLine('Example: curl apple.com', 'info');
+                this.addLine('', 'output');
+                this.scrollToBottom();
+                this.createInputDisplay();
+                this.currentInput = '';
+                this.updateInputDisplay();
             } else {
                 const url = args.startsWith('http') ? args : 'https://' + args;
                 this.addLine(`Opening ${url} in new tab...`, 'warning');
                 setTimeout(() => {
                     window.open(url, '_blank');
                     this.addLine(`Successfully opened: ${url}`, 'success');
+                    this.addLine('', 'output');
+                    this.scrollToBottom();
+                    this.createInputDisplay();
+                    this.currentInput = '';
+                    this.updateInputDisplay();
                 }, 500);
             }
         },
@@ -657,15 +754,79 @@ class Terminal {
             if (!args) {
                 this.addLine('Usage: calc <expression>', 'warning');
                 this.addLine('Example: calc 25 + 50 * 2', 'info');
-            } else {
-                try {
+                return;
+            }
+    try {
                     const sanitized = args.replace(/[^0-9+\-*/().]/g, '');
                     const result = eval(sanitized);
                     this.addLine(`${args} = ${result}`, 'success');
                 } catch (e) {
-                    this.addLine(`Invalid expression: ${args}`, 'error');
-                }
+                    this.addLine('Invalid expression. Only basic math operations allowed.', 'error');
             }
+        },
+
+        crunch: (args) => {
+            const raw = (args || '').trim();
+            if (!raw) {
+                this.addLine('Usage: crunch -w|-n|-s|-wns [>|<|<>|><] <len>', 'warning');
+                this.addLine('Example: crunch -wns <> 12', 'info');
+                this.addLine('Example: crunch -w > 10', 'info');
+                return;
+            }
+
+            const tokens = raw.split(/\s+/).filter(Boolean);
+            const specToken = tokens.find(t => t.startsWith('-'));
+            const caseToken = tokens.find(t => t === '>' || t === '<' || t === '<>' || t === '><');
+            const lenToken = [...tokens].reverse().find(t => /^\d+$/.test(t));
+
+            if (!specToken || !lenToken) {
+                this.addLine('Invalid args. Try: crunch -wns <> 12', 'error');
+                return;
+            }
+
+            const spec = specToken.replace(/^-+/, '').toLowerCase();
+            const pattern = spec.split('').filter(ch => ch === 'w' || ch === 'n' || ch === 's');
+            const len = parseInt(lenToken, 10);
+
+            if (!pattern.length) {
+                this.addLine('Invalid set. Use -w (word), -n (number), -s (special), or combos like -wns', 'error');
+                return;
+            }
+            if (!Number.isFinite(len) || len <= 0) {
+                this.addLine('Length must be a positive number.', 'error');
+                return;
+            }
+            if (len > 128) {
+                this.addLine('Max length is 128 (safety limit).', 'warning');
+                return;
+            }
+
+            const caseMode = caseToken || '<>';
+
+            const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lower = 'abcdefghijklmnopqrstuvwxyz';
+            const digits = '0123456789';
+            const specials = '!@#$%^&*()-_=+[]{};:,.?/~';
+
+            const pick = (str) => str[Math.floor(Math.random() * str.length)];
+
+            const letterForIndex = (i) => {
+                if (caseMode === '>') return pick(upper);
+                if (caseMode === '<') return pick(lower);
+                if (caseMode === '><') return (i % 2 === 0) ? pick(upper) : pick(lower);
+                // '<>' mixed
+                return (Math.random() < 0.5) ? pick(upper) : pick(lower);
+            };
+
+            let out = '';
+            for (let i = 0; i < len; i++) {
+                const type = pattern[i % pattern.length];
+                if (type === 'w') out += letterForIndex(i);
+                else if (type === 'n') out += pick(digits);
+                else out += pick(specials);
+            }
+
+            this.addLine(out, 'success');
         },
 
         date: () => {
@@ -829,6 +990,7 @@ class Terminal {
             this.addLine('EASTER EGGS:', 'warning');
             this.addLine('  hack            - Activate hack mode', 'output');
             this.addLine('  matrix          - Matrix rain animation', 'output');
+            this.addLine('  crunch ...      - Generate random password text', 'output');
             this.addLine('  joke            - Get a random joke', 'output');
             this.addLine('  exit            - Close terminal', 'output');
         },
@@ -937,6 +1099,8 @@ class Terminal {
                     this.addLine('Matrix animation complete.', 'success');
                     this.addLine('', 'output');
                     this.scrollToBottom();
+                    this.createInputDisplay();
+                    this.currentInput = '';
                     this.updateInputDisplay();
                     return;
                 }
@@ -967,8 +1131,17 @@ class Terminal {
                 'Why did the cybersecurity expert go to jail? For hacking their way into people\'s hearts!',
                 'There are 10 types of people in the world: those who understand binary and those who don\'t.'
             ];
-            const randomJoke = jokes[Math.floor(Math.random() * jokes.length)];
-            this.addLine(randomJoke, 'info');
+
+            const pool = this.buildJokePool(jokes);
+            const poolKey = String(pool.length);
+            if (!this.jokeBag.length || this.jokePoolKey !== poolKey) {
+                this.refillJokeBag(pool, poolKey);
+            }
+
+            const next = this.jokeBag.pop();
+            this.addLine(next || jokes[0], 'info');
+
+            this.prefetchJokes();
         }
     };
 }

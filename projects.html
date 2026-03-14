@@ -41,6 +41,9 @@
             align-items: center;
             gap: 20px;
         }
+        .projects-header-left{
+            z-index:1;
+        }
         .projects-header-left h1 {
             font-size: 40px;
             letter-spacing: 2px;
@@ -76,6 +79,8 @@
             gap: 20px;
             max-height: calc(100vh - 200px);
             overflow-y: auto;
+            padding-top: 8px;
+            padding-bottom: 8px;
             padding-right: 10px;
         }
         .project-card-3d {
@@ -295,6 +300,28 @@
                 max-height: none;
                 padding-right: 0;
             }
+
+            .project-preview-placeholder {
+                align-items: flex-start;
+                justify-content: center;
+                padding-top: 26px;
+            }
+
+            .project-gallery {
+                min-height: 280px;
+            }
+
+            .project-gallery.mobile-inline {
+                margin-top: 16px;
+                transform: translateY(18px);
+                opacity: 0;
+                transition: transform 320ms ease, opacity 320ms ease;
+            }
+
+            .project-gallery.mobile-inline.mobile-inline--show {
+                transform: translateY(0);
+                opacity: 1;
+            }
         }
     </style>
 </head>
@@ -471,6 +498,43 @@
     const qrWrapper = document.getElementById('qr-wrapper');
     const imageOverlay = document.querySelector('.project-image-overlay');
 
+    const isMobileLayout = () => window.matchMedia('(max-width: 900px)').matches;
+
+    const galleryEl = document.getElementById('project-gallery');
+    const projectsLayoutEl = document.querySelector('.projects-layout');
+    let galleryOriginalParent = galleryEl ? galleryEl.parentElement : null;
+    let galleryOriginalNextSibling = galleryEl ? galleryEl.nextElementSibling : null;
+    let mobileGalleryPinnedToCard = false;
+
+    function restoreGalleryToDesktop() {
+        if (!galleryEl || !galleryOriginalParent) return;
+        if (galleryEl.parentElement === galleryOriginalParent) return;
+        if (galleryOriginalNextSibling && galleryOriginalNextSibling.parentElement === galleryOriginalParent) {
+            galleryOriginalParent.insertBefore(galleryEl, galleryOriginalNextSibling);
+        } else {
+            galleryOriginalParent.appendChild(galleryEl);
+        }
+        galleryEl.classList.remove('mobile-inline', 'mobile-inline--show');
+    }
+
+    function moveGalleryUnderCard(card) {
+        if (!galleryEl || !projectsLayoutEl || !card) return;
+        if (!isMobileLayout()) {
+            restoreGalleryToDesktop();
+            return;
+        }
+        mobileGalleryPinnedToCard = true;
+        card.insertAdjacentElement('afterend', galleryEl);
+        galleryEl.classList.add('mobile-inline');
+        galleryEl.classList.remove('mobile-inline--show');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                galleryEl.classList.add('mobile-inline--show');
+                galleryEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            });
+        });
+    }
+
     function setActiveProject(id) {
         cards.forEach(c => c.classList.toggle('active', c.dataset.project === id));
         const data = projectsData[id];
@@ -516,7 +580,10 @@
     }
 
     cards.forEach(card => {
-        card.addEventListener('click', () => setActiveProject(card.dataset.project));
+        card.addEventListener('click', () => {
+            setActiveProject(card.dataset.project);
+            moveGalleryUnderCard(card);
+        });
     });
 
     if (imageOverlay) {
@@ -530,6 +597,20 @@
 
     // Initialize gallery state
     setActiveProject('bikrente');
+    restoreGalleryToDesktop();
+
+    window.addEventListener('resize', () => {
+        if (!isMobileLayout()) {
+            restoreGalleryToDesktop();
+        } else {
+            if (!mobileGalleryPinnedToCard) {
+                restoreGalleryToDesktop();
+                return;
+            }
+            const activeCard = document.querySelector('.project-card-3d.active');
+            if (activeCard) moveGalleryUnderCard(activeCard);
+        }
+    });
 
     // --- Three.js: orbital "radar" around active project ---
     const projectsCanvas = document.getElementById('projects-canvas');
