@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Projects – Saugat</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            background-color: #020617;
+            overscroll-behavior: contain;
+        }
+        body {
+            background: #020617;
+            color: #fefefe;
+        }
+        #projects-canvas {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+        .projects-page {
+            min-height: 100vh;
+            padding: 100px 40px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+        .projects-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+        }
+        .projects-header-left h1 {
+            font-size: 40px;
+            letter-spacing: 2px;
+        }
+        .projects-header-left p {
+            max-width: 520px;
+            color: #a5b4fc;
+        }
+        .projects-header-right a {
+            color: #64f4ac;
+            text-decoration: none;
+            font-weight: 600;
+            border: 1px solid #64f4ac55;
+            padding: 10px 18px;
+            border-radius: 999px;
+            backdrop-filter: blur(10px);
+            background: #020617aa;
+        }
+        .projects-header-right a:hover {
+            background: #22c55e;
+            color: #020617;
+            border-color: transparent;
+        }
+        .projects-layout {
+            display: grid;
+            grid-template-columns: minmax(0, 2fr) minmax(0, 1.4fr);
+            gap: 30px;
+            align-items: start;
+        }
+        .projects-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+        .project-card-3d {
+            position: relative;
+            padding: 18px 20px;
+            border-radius: 14px;
+            background: linear-gradient(135deg, #020617dd, #020617aa);
+            border: 1px solid #1f293757;
+            box-shadow: 0 18px 45px rgba(15,23,42,0.9);
+            backdrop-filter: blur(18px);
+            transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease, background .25s ease;
+            cursor: pointer;
+        }
+        .project-card-3d.active {
+            border-color: #22c55ecc;
+            box-shadow: 0 25px 60px rgba(22,163,74,0.6);
+            transform: translateY(-4px);
+            background: radial-gradient(circle at top left,#22c55e33,#020617dd);
+        }
+        .project-card-3d-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+        .project-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .project-tag {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #a5b4fc;
+        }
+        .project-description {
+            font-size: 14px;
+            color: #e5e7eb;
+        }
+        .project-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            font-size: 12px;
+            color: #9ca3af;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .project-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .pill {
+            padding: 3px 9px;
+            border-radius: 999px;
+            border: 1px solid #4b5563;
+            font-size: 11px;
+            color: #e5e7eb;
+        }
+        .project-links {
+            display: flex;
+            gap: 10px;
+        }
+        .project-links a {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            border: 1px solid #4b5563;
+            color: #e5e7eb;
+            text-decoration: none;
+            backdrop-filter: blur(8px);
+        }
+        .project-links a.primary-link {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .project-links a:hover {
+            border-color: #22c55e;
+            color: #22c55e;
+        }
+        .project-gallery {
+            position: relative;
+            border-radius: 18px;
+            background: radial-gradient(circle at top,#0f172a,#020617);
+            border: 1px solid #1f2937;
+            padding: 16px;
+            min-height: 320px;
+            box-shadow: 0 24px 70px rgba(15,23,42,0.95);
+            overflow: hidden;
+        }
+        .project-gallery-inner {
+            position: relative;
+            border-radius: 14px;
+            background: #020617cc;
+            border: 1px solid #22c55e33;
+            padding: 14px;
+            display: grid;
+            grid-template-rows: minmax(0, 3fr) auto;
+            gap: 12px;
+        }
+        .project-image-wrapper {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            background: radial-gradient(circle at top,#1d4ed8,#020617);
+            border: 1px solid #1f2937;
+            min-height: 200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-right: 120px; /* reserve space for QR on the right so image stays centered */
+            box-sizing: border-box;
+        }
+        .project-frame {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            opacity: 0.6;
+            filter: grayscale(0.2) blur(0.5px);
+            pointer-events: none;
+            background: transparent;
+        }
+        .project-image-overlay {
+            position: absolute;
+            inset: 0;
+            background: radial-gradient(circle at top, rgba(15,23,42,0.2), rgba(2,6,23,0.9));
+            z-index: 2;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+        .project-preview-placeholder {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 13px;
+            color: #e5e7eb;
+            z-index: 2;
+            pointer-events: none;
+        }
+        .project-image-wrapper img {
+            position: relative;
+            max-width: 90%;
+            max-height: 70%;
+            object-fit: contain;
+            z-index: 1;
+            pointer-events: none;
+            transform: translateX(4px); /* small visual nudge so QR + image feel centered without breaking responsive layout */
+        }
+        .qr-wrapper {
+            position: absolute;
+            right: 10px;
+            bottom: 10px;
+            width: 96px;
+            height: 96px;
+            border-radius: 16px;
+            background: #ffffff;
+            border: 1px solid #111827;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            z-index: 3;
+        } 
+        .qr-wrapper canvas {
+            width: 88px !important;
+            height: 88px !important;
+            border-radius: 12px;
+        }
+        .project-gallery-meta {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            text-align: center;
+        }
+        .project-gallery-text h3 {
+            font-size: 18px;
+        }
+        .project-gallery-text p {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+        .project-gallery-cta a {
+            display: inline-block;
+            padding: 8px 14px;
+            border-radius: 999px;
+            background: #22c55e;
+            color: #020617;
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        .project-gallery-cta a:hover {
+            background: #4ade80;
+        }
+        @media (max-width: 900px) {
+            .projects-page {
+                padding: 80px 20px 40px;
+            }
+            .projects-layout {
+                grid-template-columns: minmax(0, 1fr);
+            }
+            .projects-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .projects-list {
+                max-height: none;
+                padding-right: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+<canvas id="projects-canvas"></canvas>
+
+<div class="projects-page">
+    <header class="projects-header">
+        <div class="projects-header-left">
+            <h1>Projects Radar</h1>
+            <p>Interactive, security-flavored showcase of my favorite builds – from smart e‑commerce to fundraising and device‑level control.</p>
+        </div>
+        <div class="projects-header-right">
+            <a href="index.html">&#8592; Back to portfolio</a>
+        </div>
+    </header>
+
+    <main class="projects-layout">
+        <section class="projects-list" id="projects-list">
+            <!-- Cards are simple HTML; Three.js handles the 3D halo / orbit around the active card -->
+            <article class="project-card-3d active" data-project="bikrente">
+                <div class="project-card-3d-header">
+                    <div>
+                        <h2 class="project-title">Bikrente – Smart E‑commerce Platform</h2>
+                        <p class="project-tag">Full‑stack · Django · AI chatbot</p>
+                    </div>
+                </div>
+                <p class="project-description">
+                    Full‑stack e‑commerce platform with product discovery, AI assistant, secure auth, 
+                    multi‑payment (Esewa / PayPal), and admin analytics – designed for fast, trustworthy checkout.
+                </p>
+                <div class="project-meta">
+                    <div class="project-tags">
+                        <span class="pill">Django</span>
+                        <span class="pill">PostgreSQL</span>
+                        <span class="pill">Payment Integration</span>
+                    </div>
+                    <div class="project-links">
+                        <a class="primary-link" href="https://bikrante.onrender.com/" target="_blank" rel="noopener noreferrer">Live Demo</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="project-card-3d" data-project="beamblaster">
+                <div class="project-card-3d-header">
+                    <div>
+                        <h2 class="project-title">BeamBlaster – Programmable IR Remote</h2>
+                        <p class="project-tag">Android · Hardware control</p>
+                    </div>
+                </div>
+                <p class="project-description">
+                    Android app that turns IR‑blaster phones into universal remotes using raw hex codes, 
+                    custom profiles, and local persistence – built for legacy TVs, ACs, and more.
+                </p>
+                <div class="project-meta">
+                    <div class="project-tags">
+                        <span class="pill">Android</span>
+                        <span class="pill">SQLite</span>
+                        <span class="pill">Consumer IR API</span>
+                    </div>
+                    <div class="project-links">
+                        <a class="primary-link" href="https://github.com/SaugatEDITH/BeamBlaster/" target="_blank" rel="noopener noreferrer">GitHub</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="project-card-3d" data-project="sahayog">
+                <div class="project-card-3d-header">
+                    <div>
+                        <h2 class="project-title">Sahayog – Online Fundraising System</h2>
+                        <p class="project-tag">Django · Payments · Social impact</p>
+                    </div>
+                </div>
+                <p class="project-description">
+                    Donation platform where campaigns, donors, and payments all live in one secure place – 
+                    with dashboards, real‑time Esewa / PayPal integration, and responsive UX.
+                </p>
+                <div class="project-meta">
+                    <div class="project-tags">
+                        <span class="pill">Django</span>
+                        <span class="pill">Esewa</span>
+                        <span class="pill">PayPal</span>
+                    </div>
+                    <div class="project-links">
+                        <a class="primary-link" href="https://sahayog-j6ns.onrender.com/" target="_blank" rel="noopener noreferrer">Live Demo</a>
+                    </div>
+                </div>
+            </article>
+
+            <article class="project-card-3d" data-project="college">
+                <div class="project-card-3d-header">
+                    <div>
+                        <h2 class="project-title">College Web App – Multi‑role Platform</h2>
+                        <p class="project-tag">Django · Admin & teacher dashboards</p>
+                    </div>
+                </div>
+                <p class="project-description">
+                    A campus management web app with roles for admins and teachers, 
+                    powering notices, blogs, gallery, resources, and online admissions in one panel.
+                </p>
+                <div class="project-meta">
+                    <div class="project-tags">
+                        <span class="pill">Django</span>
+                        <span class="pill">Role‑based Access</span>
+                        <span class="pill">Responsive UI</span>
+                    </div>
+                    <div class="project-links">
+                        <a class="primary-link" href="https://college-ubz8.onrender.com/" target="_blank" rel="noopener noreferrer">Live Demo</a>
+                    </div>
+                </div>
+            </article>
+        </section>
+
+        <aside class="project-gallery" id="project-gallery">
+            <div class="project-gallery-inner">
+                <div class="project-image-wrapper">
+                    <div class="project-image-overlay"></div>
+                    <div id="project-preview-placeholder" class="project-preview-placeholder">Project preview</div>
+                    <img id="project-image" src="" alt="Project preview" style="display:none;">
+                    <div class="qr-wrapper" id="qr-wrapper" style="display:none;">
+                        <div id="project-qr"></div>
+                    </div>
+                </div>
+                <div class="project-gallery-meta">
+                    <div class="project-gallery-text">
+                        <h3 id="gallery-title">Bikrente – Smart E‑commerce Platform</h3>
+                        <p id="gallery-subtitle">A full‑stack commerce engine with AI assistant, secure auth, and real‑world payments.</p>
+                    </div>
+                    <div class="project-gallery-cta">
+                        <a id="gallery-cta" href="https://bikrante.onrender.com/" target="_blank" rel="noopener noreferrer">Open project</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </main>
+</div>
+
+<script>
+    // --- Data describing projects (images optional; QR is generated from URL) ---
+    const projectsData = {
+        bikrente: {
+            title: 'Bikrente – Smart E‑commerce Platform',
+            subtitle: 'Full‑stack shopping experience with AI assistant and multi‑payment support.',
+            url: 'https://bikrante.onrender.com/',
+            image: 'assets/bikrente.png'   // optional preview image
+        },
+        beamblaster: {
+            title: 'BeamBlaster – Programmable IR Remote',
+            subtitle: 'Turn your IR‑blaster phone into a universal remote for legacy devices.',
+            url: 'https://github.com/SaugatEDITH/BeamBlaster/',
+            image: 'assets/beamblaster.png'
+        },
+        sahayog: {
+            title: 'Sahayog – Online Fundraising System',
+            subtitle: 'Campaign‑driven donations with Esewa / PayPal integration and dashboards.',
+            url: 'https://sahayog-j6ns.onrender.com/',
+            image: 'assets/sahayog.png'
+        },
+        college: {
+            title: 'College Web App – Multi‑role Platform',
+            subtitle: 'Admin + teacher dashboards for content, resources, and admissions.',
+            url: 'https://college-ubz8.onrender.com/',
+            image: 'assets/college.png'
+        }
+    };
+
+    const cards = document.querySelectorAll('.project-card-3d');
+    const galleryTitle = document.getElementById('gallery-title');
+    const gallerySubtitle = document.getElementById('gallery-subtitle');
+    const galleryCta = document.getElementById('gallery-cta');
+    const projectImage = document.getElementById('project-image');
+    const previewPlaceholder = document.getElementById('project-preview-placeholder');
+    const projectQr = document.getElementById('project-qr');
+    const qrWrapper = document.getElementById('qr-wrapper');
+    const imageOverlay = document.querySelector('.project-image-overlay');
+
+    function setActiveProject(id) {
+        cards.forEach(c => c.classList.toggle('active', c.dataset.project === id));
+        const data = projectsData[id];
+        if (!data) return;
+        galleryTitle.textContent = data.title;
+        gallerySubtitle.textContent = data.subtitle;
+        galleryCta.href = data.url;
+
+        // Handle main preview image
+        if (data.image) {
+            projectImage.onload = () => {
+                projectImage.style.display = 'block';
+            };
+            projectImage.onerror = () => {
+                projectImage.style.display = 'none';
+            };
+            projectImage.src = data.image;
+        } else {
+            projectImage.style.display = 'none';
+        }
+
+        // Handle QR - generate from URL
+        if (data.url && window.QRCode) {
+            qrWrapper.style.display = 'flex';
+            projectQr.innerHTML = '';
+            new QRCode(projectQr, {
+                text: data.url,
+                width: 100,
+                height: 100,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.M
+            });
+        } else {
+            qrWrapper.style.display = 'none';
+            projectQr.innerHTML = '';
+        }
+
+        // Sync Three.js orbit highlight
+        if (window.setOrbitActiveProject) {
+            window.setOrbitActiveProject(id);
+        }
+    }
+
+    cards.forEach(card => {
+        card.addEventListener('click', () => setActiveProject(card.dataset.project));
+    });
+
+    if (imageOverlay) {
+        imageOverlay.addEventListener('click', () => {
+            const url = galleryCta && galleryCta.href;
+            if (url) {
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        });
+    }
+
+    // Initialize gallery state
+    setActiveProject('bikrente');
+
+    // --- Three.js: orbital "radar" around active project ---
+    const projectsCanvas = document.getElementById('projects-canvas');
+    const renderer = new THREE.WebGLRenderer({ canvas: projectsCanvas, alpha: false, antialias: true });
+    renderer.setPixelRatio(window.devicePixelRatio);
+    renderer.setSize(window.innerWidth, window.innerHeight);
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 200);
+    camera.position.set(0, 10, 45);
+
+    const root = new THREE.Group();
+    scene.add(root);
+
+    const ringGroup = new THREE.Group();
+    root.add(ringGroup);
+
+    // Soft ambient + directional rim light
+    const ambient = new THREE.AmbientLight(0x22c55e, 0.6);
+    scene.add(ambient);
+    const dir = new THREE.DirectionalLight(0x22c55e, 1.2);
+    dir.position.set(20, 30, 10);
+    scene.add(dir);
+
+    // Orbit ring
+    const ringGeometry = new THREE.RingGeometry(18, 19.5, 90);
+    const ringMaterial = new THREE.MeshBasicMaterial({
+        color: 0x22ff88,
+        side: THREE.DoubleSide,
+        transparent: true,
+        opacity: 0.35
+    });
+    const ringMesh = new THREE.Mesh(ringGeometry, ringMaterial);
+    ringMesh.rotation.x = -Math.PI / 2;
+    ringGroup.add(ringMesh);
+
+    // Project "nodes" orbiting on the ring
+    const projectIds = Object.keys(projectsData);
+    const nodes = [];
+    projectIds.forEach((id, index) => {
+        const angle = (index / projectIds.length) * Math.PI * 2;
+        const geom = new THREE.SphereGeometry(0.9, 24, 24);
+        const mat = new THREE.MeshStandardMaterial({
+            color: 0x1d4ed8,
+            emissive: 0x22c55e,
+            emissiveIntensity: 0.3,
+            roughness: 0.2,
+            metalness: 0.7
+        });
+        const sphere = new THREE.Mesh(geom, mat);
+        sphere.position.set(
+            Math.cos(angle) * 16.7,
+            0,
+            Math.sin(angle) * 16.7
+        );
+        sphere.userData.projectId = id;
+        ringGroup.add(sphere);
+        nodes.push(sphere);
+    });
+
+    // Floating particles
+    const particlesGeometry = new THREE.BufferGeometry();
+    const particlesCount = 1400;
+    const posArray = new Float32Array(particlesCount * 3);
+    for (let i = 0; i < particlesCount * 3; i++) {
+        posArray[i] = (Math.random() - 0.5) * 120;
+    }
+    particlesGeometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+    const particlesMaterial = new THREE.PointsMaterial({
+        size: 0.9,
+        color: 0x4ade80,
+        transparent: true,
+        opacity: 0.9
+    });
+    const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+    scene.add(particles);
+
+    let activeProjectId = 'bikrente';
+    window.setOrbitActiveProject = (id) => {
+        activeProjectId = id;
+    };
+
+    const clock = new THREE.Clock();
+    function animate() {
+        requestAnimationFrame(animate);
+        const t = clock.getElapsedTime();
+
+        ringGroup.rotation.y = t * 0.15;
+        particles.rotation.y = t * 0.05;
+
+        nodes.forEach(node => {
+            const isActive = node.userData.projectId === activeProjectId;
+            const targetScale = isActive ? 1.4 : 1.0;
+            const currentScale = node.scale.x;
+            const lerp = 0.12;
+            const newScale = THREE.MathUtils.lerp(currentScale, targetScale, lerp);
+            node.scale.setScalar(newScale);
+
+            const baseY = isActive ? 1.5 : 0.3;
+            node.position.y = baseY + Math.sin(t * 2 + node.position.x) * 0.3;
+            (node.material).emissiveIntensity = isActive ? 0.9 : 0.3;
+        });
+
+        root.rotation.x = 0.25;
+        renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+</script>
+</body>
+</html>
+

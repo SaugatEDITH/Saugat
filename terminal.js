@@ -10,6 +10,11 @@ class Terminal {
         this.setupKeyboardInput();
     }
 
+    getPrompt() {
+        const dir = this.currentDirectory === '/home/saugat' ? '~' : this.currentDirectory;
+        return `saugat@portfolio:${dir}$`;
+    }
+
     showWelcomeScreen() {
         this.addLine(`Copyright (C) ${new Date().getFullYear()} Saugat Pokharel. All rights reserved.`, 'copyright');
         this.addLine('Welcome to Saugat\'s Terminal Portfolio v1.0', 'success');
@@ -83,6 +88,10 @@ class Terminal {
                         this.addLine('[Y]', 'output');
                         this.addLine('', 'output');
                         this.nanoMode.active = false;
+                        this.scrollToBottom();
+                        this.createInputDisplay();
+                        this.currentInput = '';
+                        this.updateInputDisplay();
                     }, 500);
                 }
                 return;
@@ -137,7 +146,8 @@ class Terminal {
         if (!this.inputDisplay) {
             this.createInputDisplay();
         }
-        this.inputDisplay.innerHTML = `<span class="prompt">saugat@portfolio:~$</span> <span class="command" style="border-right: 2px solid #00ff00; padding-right: 3px;">${this.currentInput}</span>`;
+        const prompt = this.getPrompt();
+        this.inputDisplay.innerHTML = `<span class="prompt">${prompt}</span> <span class="command" style="border-right: 2px solid #00ff00; padding-right: 3px;">${this.currentInput}</span>`;
         this.scrollToBottom();
     }
 
@@ -170,7 +180,7 @@ class Terminal {
             this.inputDisplay = null;
         }
 
-        this.addLine(`saugat@portfolio:~$ ${command}`, 'command');
+        this.addLine(command, 'command');
         this.history.push(command);
         this.historyIndex = this.history.length;
         this.currentInput = '';
@@ -454,7 +464,8 @@ class Terminal {
         line.className = 'terminal-line';
         
         if (type === 'command') {
-            line.innerHTML = `<span class="prompt">saugat@portfolio:~$</span> <span class="command">${content}</span>`;
+            const prompt = this.getPrompt();
+            line.innerHTML = `<span class="prompt">${prompt}</span> <span class="command">${content}</span>`;
         } else if (type === 'copyright') {
             line.innerHTML = `<span class="${type}">${content}</span>`;
         } else {
@@ -825,6 +836,8 @@ class Terminal {
         clear: () => {
             this.output.innerHTML = '';
             this.createInputDisplay();
+            this.currentInput = '';
+            this.updateInputDisplay();
         },
 
         exit: () => {
@@ -880,7 +893,7 @@ class Terminal {
                 
                 // Update or create progress line
                 const lastLine = this.output.lastChild;
-                if (lastLine && lastLine.textContent.includes('%')) {
+                if (lastLine && lastLine.textContent && lastLine.textContent.includes('%')) {
                     lastLine.innerHTML = `<span class="output">[${bar}] ${Math.round(progress)}%</span>`;
                 } else {
                     this.addLine(`[${bar}] ${Math.round(progress)}%`, 'output');

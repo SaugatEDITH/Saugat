@@ -404,6 +404,36 @@ body::selection {
   flex-direction: column;
 }
 
+.view-all-projects {
+  margin-top: 14px;
+}
+
+.view-all-projects a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid #64f4ac66;
+  background: #2d2e32;
+  color: #64f4ac;
+  font-weight: 700;
+  font-size: 14px;
+  text-decoration: none;
+  letter-spacing: 0.2px;
+  width: fit-content;
+}
+
+.view-all-projects a::after {
+  content: none !important;
+}
+
+.view-all-projects a:hover {
+  background: #64f4ac;
+  color: #2d2e32;
+  border-color: transparent;
+}
+
 .design-card {
 
   position: relative;

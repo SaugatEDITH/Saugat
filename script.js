@@ -147,3 +147,85 @@ form.addEventListener("submit", function(event) {
         });
     }
 });
+
+function shouldPrewarmProjects() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection) {
+        if (connection.saveData) return false;
+        const type = (connection.effectiveType || '').toLowerCase();
+        if (type.includes('2g')) return false;
+    }
+    return true;
+}
+
+function prewarmRenderProjects() {
+    if (!shouldPrewarmProjects()) return;
+
+    const sessionKey = 'render_prewarm_v1';
+    const today = new Date().toISOString().slice(0, 10);
+    if (sessionStorage.getItem(sessionKey) === today) return;
+    sessionStorage.setItem(sessionKey, today);
+
+    const urls = [
+        'https://bikrante.onrender.com/',
+        'https://sahayog-j6ns.onrender.com/',
+        'https://college-ubz8.onrender.com/'
+    ];
+
+    const timeoutMs = 7000;
+    const baseDelayMs = 1500;
+    const jitterMs = 900;
+
+    urls.forEach((url, idx) => {
+        const delay = idx * baseDelayMs + Math.floor(Math.random() * jitterMs);
+        setTimeout(() => {
+            try {
+                const controller = (window.AbortController) ? new AbortController() : null;
+                const timer = controller ? setTimeout(() => controller.abort(), timeoutMs) : null;
+
+                fetch(url, {
+                    method: 'GET',
+                    mode: 'no-cors',
+                    cache: 'no-store',
+                    credentials: 'omit',
+                    keepalive: true,
+                    signal: controller ? controller.signal : undefined
+                }).catch(() => {}).finally(() => {
+                    if (timer) clearTimeout(timer);
+                });
+            } catch (e) {
+            }
+        }, delay);
+    });
+}
+
+function setupPrewarmOnSmallScroll() {
+    let triggered = false;
+    const scrollThresholdPx = 60;
+
+    const trigger = () => {
+        if (triggered) return;
+        triggered = true;
+        window.removeEventListener('scroll', onScroll, { passive: true });
+        window.removeEventListener('wheel', trigger, { passive: true });
+        window.removeEventListener('touchmove', trigger, { passive: true });
+
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => prewarmRenderProjects(), { timeout: 2500 });
+        } else {
+            setTimeout(() => prewarmRenderProjects(), 300);
+        }
+    };
+
+    const onScroll = () => {
+        if (window.scrollY >= scrollThresholdPx) {
+            trigger();
+        }
+    };
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('wheel', trigger, { passive: true });
+    window.addEventListener('touchmove', trigger, { passive: true });
+}
+
+setupPrewarmOnSmallScroll();
