@@ -10,11 +10,21 @@ class Terminal {
         this.lastJokeFetchAt = 0;
         this.jokeBag = [];
         this.jokePoolKey = '';
+        this.setupMobileInput();
         this.setupSidebarCommands();
         this.showWelcomeScreen();
         this.setupKeyboardInput();
 
         this.prefetchJokes();
+        
+        // Auto-execute command from URL if present
+        const urlParams = new URLSearchParams(window.location.search);
+        const cmdParam = urlParams.get('cmd');
+        if (cmdParam) {
+            setTimeout(() => {
+                this.executeCommand(cmdParam);
+            }, 500);
+        }
     }
 
     getPrompt() {
@@ -31,11 +41,62 @@ class Terminal {
         this.scrollToBottom();
     }
 
+    setupMobileInput() {
+        this.mobileInput = document.createElement('input');
+        this.mobileInput.type = 'text';
+        this.mobileInput.id = 'mobile-keyboard-input';
+        this.mobileInput.style.position = 'absolute';
+        this.mobileInput.style.opacity = '0';
+        this.mobileInput.style.top = '-1000px';
+        this.mobileInput.style.left = '-1000px';
+        this.mobileInput.setAttribute('autocapitalize', 'none');
+        this.mobileInput.setAttribute('autocomplete', 'off');
+        this.mobileInput.setAttribute('spellcheck', 'false');
+        this.mobileInput.setAttribute('autocorrect', 'off');
+        document.body.appendChild(this.mobileInput);
+
+        const terminalContainer = document.querySelector('.terminal-container');
+        if (terminalContainer) {
+            terminalContainer.addEventListener('click', () => {
+                const selection = window.getSelection().toString();
+                if (!selection) {
+                    this.mobileInput.focus();
+                }
+            });
+        }
+
+        this.mobileInput.addEventListener('input', (e) => {
+            if (this.cvClearanceMode && this.cvClearanceMode.active && (this.cvClearanceMode.step === 'wait' || this.cvClearanceMode.step === 'captcha')) {
+                this.mobileInput.value = '';
+                return;
+            }
+            if (this.vimMode && this.vimMode.active) {
+                this.mobileInput.value = '';
+                return;
+            }
+
+            if (this.cvClearanceMode && this.cvClearanceMode.active) {
+                this.currentInput = this.mobileInput.value;
+                this.updateCvClearanceDisplay();
+            } else if (!this.nanoMode || !this.nanoMode.active) {
+                this.currentInput = this.mobileInput.value;
+                this.updateInputDisplay();
+            }
+        });
+    }
+
     setupKeyboardInput() {
         document.addEventListener('keydown', (e) => {
             // Don't interfere with special keys or if user is typing in an input
-            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+            if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') && e.target.id !== 'mobile-keyboard-input') {
                 return;
+            }
+
+            // On mobile, let the 'input' event handle character typing & backspace for soft keyboards
+            if (e.target.id === 'mobile-keyboard-input') {
+                if ((e.key.length === 1 && !e.ctrlKey) || e.key === 'Backspace') {
+                    return; 
+                }
             }
 
             // Handle VIM mode
@@ -104,6 +165,37 @@ class Terminal {
                 return;
             }
 
+            // Handle CV Clearance mode
+            if (this.cvClearanceMode && this.cvClearanceMode.active) {
+                if (e.key === 'c' && e.ctrlKey) {
+                    e.preventDefault();
+                    this.cvClearanceMode.active = false;
+                    this.addLine('^C', 'output');
+                    this.addLine('Clearance protocol aborted.', 'error');
+                    this.addLine('', 'output');
+                    this.scrollToBottom();
+                    this.createInputDisplay();
+                    this.currentInput = '';
+                    this.updateInputDisplay();
+                    return;
+                }
+                
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.handleCvClearanceInput(this.currentInput || '');
+                    this.currentInput = '';
+                } else if (e.key === 'Backspace') {
+                    e.preventDefault();
+                    this.currentInput = (this.currentInput || '').slice(0, -1);
+                    this.updateCvClearanceDisplay();
+                } else if (e.key.length === 1) {
+                    e.preventDefault();
+                    this.currentInput = (this.currentInput || '') + e.key;
+                    this.updateCvClearanceDisplay();
+                }
+                return;
+            }
+
             // Handle regular input
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -156,6 +248,331 @@ class Terminal {
         const prompt = this.getPrompt();
         this.inputDisplay.innerHTML = `<span class="prompt">${prompt}</span> <span class="command" style="border-right: 2px solid #00ff00; padding-right: 3px;">${this.currentInput}</span>`;
         this.scrollToBottom();
+        
+        // Sync mobile input helper
+        if (this.mobileInput) {
+            this.mobileInput.value = this.currentInput;
+        }
+    }
+
+    updateCvClearanceDisplay() {
+        if (!this.inputDisplay) {
+            this.createInputDisplay();
+        }
+        let promptText = '';
+        if (this.cvClearanceMode.step === 'name') promptText = 'FULL NAME: ';
+        else if (this.cvClearanceMode.step === 'org') promptText = 'ORGANIZATION: ';
+        else if (this.cvClearanceMode.step === 'purpose') promptText = 'PURPOSE OF ACCESS: ';
+        else if (this.cvClearanceMode.step === 'challenge') promptText = 'DECRYPTION KEY: ';
+        
+        let displayInput = this.currentInput;
+        if (this.cvClearanceMode.step === 'challenge') {
+            displayInput = '*'.repeat(this.currentInput.length);
+        }
+        
+        this.inputDisplay.innerHTML = `<span class="info" style="flex: none; white-space: nowrap;">${promptText}</span> <span class="command" style="border-right: 2px solid #00ff00; padding-right: 3px;">${displayInput}</span>`;
+        this.scrollToBottom();
+        
+        // Sync mobile input helper
+        if (this.mobileInput) {
+            this.mobileInput.value = this.currentInput;
+        }
+    }
+
+    async sha256(message) {
+        const msgBuffer = new TextEncoder().encode(message);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async handleCvClearanceInput(input) {
+        input = input.trim();
+        
+        // Remove active input display
+        if (this.inputDisplay) {
+            this.inputDisplay.remove();
+            this.inputDisplay = null;
+        }
+
+        let promptText = '';
+        if (this.cvClearanceMode.step === 'name') promptText = 'FULL NAME: ';
+        else if (this.cvClearanceMode.step === 'org') promptText = 'ORGANIZATION: ';
+        else if (this.cvClearanceMode.step === 'purpose') promptText = 'PURPOSE OF ACCESS: ';
+        else if (this.cvClearanceMode.step === 'challenge') promptText = 'DECRYPTION KEY: ';
+
+        const displayInput = this.cvClearanceMode.step === 'challenge' ? '*'.repeat(input.length) : input;
+        
+        // Append finalized line
+        const line = document.createElement('div');
+        line.className = 'terminal-line';
+        line.innerHTML = `<span class="info" style="flex: none; white-space: nowrap;">${promptText}</span> <span class="command">${displayInput}</span>`;
+        this.output.appendChild(line);
+        if (this.cvClearanceMode.step === 'name') {
+            const parts = input.split(' ').filter(p => p.length > 0);
+            if (parts.length >= 2 && parts.every(p => p.length >= 2)) {
+                this.cvClearanceMode.name = input;
+                this.cvClearanceMode.step = 'org';
+            }
+        } else if (this.cvClearanceMode.step === 'org') {
+            if (input.length < 2) {
+                this.addLine('Error: Organization must be at least 2 characters.', 'error');
+            } else {
+                this.cvClearanceMode.org = input;
+                this.cvClearanceMode.step = 'purpose';
+            }
+        } else if (this.cvClearanceMode.step === 'purpose') {
+            const words = input.trim().split(/\s+/);
+            const isDescriptive = (words.length >= 4 || input.length >= 20);
+            const isNotGibberish = !/(.)\1{3,}/.test(input) && /[aeiouy]/i.test(input);
+            
+            if (!isDescriptive || !isNotGibberish) {
+                this.addLine('Error: Purpose must be descriptive.', 'error');
+            } else {
+                this.cvClearanceMode.purpose = input;
+                this.cvClearanceMode.step = 'wait';
+                
+                this.addLine('', 'output');
+                this.addLine('IDENTIFICATION ACCEPTED.', 'success');
+                this.addLine('INITIATING BACKGROUND CHECK...', 'warning');
+                
+                // Silently alert owner that someone reached the clearance protocol
+                setTimeout(() => {
+                    const sendAlert = (networkData = null) => {
+                        const formData = new FormData();
+                        formData.append('subject', '🚨 Terminal Alert: CV Clearance Protocol Initiated');
+                        formData.append('Name', this.cvClearanceMode.name);
+                        formData.append('Organization', this.cvClearanceMode.org);
+                        formData.append('Purpose', this.cvClearanceMode.purpose);
+                        
+                        if (networkData) {
+                            formData.append('IP_Address', networkData.ip || 'Unknown');
+                            formData.append('ISP_Org', networkData.org || 'Unknown');
+                            formData.append('Location', `${networkData.city}, ${networkData.region}, ${networkData.country}`);
+                            formData.append('Coordinates', networkData.loc || 'Unknown');
+                            formData.append('Hostname', networkData.hostname || 'Unknown');
+                            formData.append('Timezone_IP', networkData.timezone || 'Unknown');
+                        } else {
+                            formData.append('IP_Address', 'Unknown (Blocked by Client)');
+                        }
+                        
+                        formData.append('User_Agent', navigator.userAgent);
+                        formData.append('Screen_Size', `${window.screen.width}x${window.screen.height}`);
+                        formData.append('Timezone_Sys', Intl.DateTimeFormat().resolvedOptions().timeZone);
+                        formData.append('Language', navigator.language);
+                        
+                        fetch('https://formspree.io/f/meajpwql', {
+                            method: 'POST',
+                            body: formData,
+                            headers: { 'Accept': 'application/json' }
+                        }).catch(() => {});
+                    };
+
+                    fetch('https://ipinfo.io/json')
+                        .then(r => r.json())
+                        .then(data => sendAlert(data))
+                        .catch(() => sendAlert(null));
+                }, 100);
+                
+                let progress = 0;
+                const progressLine = document.createElement('div');
+                progressLine.className = 'terminal-line';
+                this.output.appendChild(progressLine);
+                
+                // We simulate a wait to deter scrapers/creeps (15 seconds total)
+                const interval = setInterval(() => {
+                    progress += 5;
+                    const hashes = '#'.repeat(Math.floor(progress / 5));
+                    const dots = '.'.repeat(20 - Math.floor(progress / 5));
+                    progressLine.innerHTML = `<span class="info">[${hashes}${dots}] ${progress}%</span>`;
+                    
+                    if (progress >= 100) {
+                        clearInterval(interval);
+                        setTimeout(() => this.startCvChallenge(), 1000);
+                    }
+                }, 750); // 15 seconds
+                return;
+            }
+        } else if (this.cvClearanceMode.step === 'challenge') {
+            // Hash the user's input and compare against stored hash
+            const userAnswer = input.toLowerCase();
+            const inputHash = await this.sha256(userAnswer);
+            
+            if (inputHash === this.cvClearanceMode.currentChallenge.h) {
+                this.cvClearanceMode.active = false;
+                this.addLine('', 'output');
+                this.addLine('CLEARANCE GRANTED. DECRYPTING PAYLOAD...', 'success');
+                
+                // Unwrap the master key using the raw user input (not the hash)
+                const wrapped = atob(this.cvClearanceMode.currentChallenge.k);
+                let masterKey = '';
+                for(let i=0; i<wrapped.length; i++) {
+                    masterKey += String.fromCharCode(wrapped.charCodeAt(i) ^ userAnswer.charCodeAt(i % userAnswer.length));
+                }
+                
+                this.showCaptcha(masterKey);
+            } else {
+                this.cvClearanceMode.active = false;
+                this.addLine('', 'output');
+                this.addLine('ACCESS DENIED. INCORRECT KEY.', 'error');
+                this.addLine('SECURITY BREACH DETECTED. PROTOCOL RESET.', 'warning');
+                setTimeout(() => {
+                    this.addLine('', 'output');
+                    this.executeCommand('get-cv');
+                }, 1500);
+            }
+        }
+
+        if (this.cvClearanceMode.active && this.cvClearanceMode.step !== 'wait') {
+            this.currentInput = '';
+            this.updateCvClearanceDisplay();
+        }
+    }
+
+    startCvChallenge() {
+        this.addLine('', 'output');
+        this.addLine('BACKGROUND CHECK: PASSED', 'success');
+        this.addLine('FINAL CLEARANCE REQUIRED', 'warning');
+        this.addLine('', 'output');
+        this.addLine(`CHALLENGE: ${this.cvClearanceMode.currentChallenge.q}`, 'info');
+        this.cvClearanceMode.step = 'challenge';
+        this.createInputDisplay();
+        this.currentInput = '';
+        this.updateCvClearanceDisplay();
+    }
+
+    showCaptcha(masterKey) {
+        this.cvClearanceMode.step = 'captcha';
+        if (this.inputDisplay) {
+            this.inputDisplay.remove();
+            this.inputDisplay = null;
+        }
+
+        this.addLine('', 'output');
+        this.addLine('HUMAN VERIFICATION REQUIRED: ALIGN THE DATA BLOCK', 'warning');
+        
+        const captchaContainer = document.createElement('div');
+        captchaContainer.style.margin = '15px 0';
+        captchaContainer.style.padding = '20px';
+        captchaContainer.style.border = '1px solid #00ff55';
+        captchaContainer.style.background = 'rgba(0, 255, 0, 0.05)';
+        captchaContainer.style.width = '100%';
+        captchaContainer.style.maxWidth = '500px';
+        captchaContainer.style.display = 'flex';
+        captchaContainer.style.flexDirection = 'column';
+        captchaContainer.style.gap = '15px';
+        captchaContainer.style.fontFamily = "'Courier New', monospace";
+        
+        // Create 40 character string
+        const targetPos = Math.floor(Math.random() * 25) + 5; // 5 to 30
+        let topString = '';
+        for(let i=0; i<40; i++) {
+            if (i >= targetPos && i < targetPos + 5) topString += '_';
+            else topString += Math.random() > 0.5 ? '1' : '0';
+        }
+        
+        captchaContainer.innerHTML = `
+            <div style="color: #0ff; font-size: 12px; margin-bottom: 10px;">> SLIDE TO ALIGN THE PAYLOAD BLOCK WITH THE TARGET SLOT</div>
+            <div style="color: #ffaa00; font-size: 11px; margin-bottom: 10px;">> HOLD ALIGNMENT FOR 1 SECOND</div>
+            
+            <div style="background: #000; padding: 15px; border-radius: 4px; overflow: hidden; border: 1px solid rgba(0,255,0,0.2);">
+                <div style="color: #00ff00; letter-spacing: 2px; white-space: pre; font-size: 14px;">${topString}</div>
+                <div id="captcha-payload" style="color: #ff0055; letter-spacing: 2px; white-space: pre; font-size: 14px;">█████</div>
+            </div>
+            
+            <input type="range" min="0" max="35" value="0" id="captcha-slider" style="width: 100%; cursor: pointer; margin-top: 10px;">
+        `;
+        
+        this.output.appendChild(captchaContainer);
+        this.scrollToBottom();
+        
+        const slider = captchaContainer.querySelector('#captcha-slider');
+        const payload = captchaContainer.querySelector('#captcha-payload');
+        
+        let successTimer = null;
+        
+        const checkCaptcha = () => {
+            const val = parseInt(slider.value);
+            let payloadStr = '';
+            for(let i=0; i<val; i++) payloadStr += ' ';
+            payloadStr += '█████';
+            payload.innerText = payloadStr;
+            
+            if (val === targetPos) {
+                if (!successTimer) {
+                    payload.style.color = '#00ff55';
+                    successTimer = setTimeout(() => {
+                        slider.disabled = true;
+                        captchaContainer.style.borderColor = '#00ff55';
+                        captchaContainer.innerHTML = '<div style="color: #00ff55; text-align: center; font-weight: bold; padding: 20px 0;">VERIFICATION SUCCESSFUL</div>';
+                        setTimeout(() => {
+                            this.addLine('DECRYPTING PAYLOAD...', 'success');
+                            this.decryptAndDownloadCV(masterKey);
+                        }, 500);
+                    }, 1000); // Must hold it for 1 second
+                }
+            } else {
+                payload.style.color = '#ff0055';
+                if (successTimer) {
+                    clearTimeout(successTimer);
+                    successTimer = null;
+                }
+            }
+        };
+        
+        slider.addEventListener('input', checkCaptcha);
+    }
+
+    async decryptAndDownloadCV(masterKey) {
+        try {
+            // First we need to fetch the encrypted payload
+            const response = await fetch('assets/sys_config.enc');
+            if (!response.ok) throw new Error('Payload not found');
+            const cipherText = await response.text();
+            
+            // Decrypt using CryptoJS and the correct challenge answer as password
+            const decrypted = CryptoJS.AES.decrypt(cipherText, masterKey);
+            const base64Data = decrypted.toString(CryptoJS.enc.Utf8);
+            
+            if (!base64Data) throw new Error('Decryption failed');
+            
+            // Reconstruct the PDF blob from base64
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], {type: 'application/pdf'});
+            
+            // Trigger download
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'Saugat_Pokharel_CV.pdf';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            this.addLine('PAYLOAD DELIVERED.', 'success');
+            
+            setTimeout(() => {
+                this.addLine('', 'output');
+                this.createInputDisplay();
+                this.currentInput = '';
+                this.updateInputDisplay();
+            }, 1000);
+            
+        } catch (e) {
+            this.addLine('DECRYPTION PROTOCOL FAILED: ' + e.message, 'error');
+            setTimeout(() => {
+                this.addLine('', 'output');
+                this.createInputDisplay();
+                this.currentInput = '';
+                this.updateInputDisplay();
+            }, 1000);
+        }
     }
 
     setupSidebarCommands() {
@@ -221,7 +638,7 @@ class Terminal {
         } else if (cmd === 'nano') {
             this.handleNano(args);
             // Don't show prompt - NANO will handle it
-        } else if (cmd === 'ping' || cmd === 'hack' || cmd === 'curl' || cmd === 'matrix') {
+        } else if (cmd === 'ping' || cmd === 'hack' || cmd === 'curl' || cmd === 'matrix' || cmd === 'get-cv') {
             // Don't show prompt - async commands handle it when complete
             this.commands[cmd].call(this, args);
         } else {
@@ -569,6 +986,52 @@ class Terminal {
     }
 
     commands = {
+        'get-cv': () => {
+            const lockoutTime = localStorage.getItem('cv_lockout');
+            if (lockoutTime && Date.now() - parseInt(lockoutTime) < 5 * 60 * 1000) {
+                const remaining = Math.ceil((5 * 60 * 1000 - (Date.now() - parseInt(lockoutTime))) / 60000);
+                this.addLine(`ACCESS DENIED. You are locked out. Try again in ${remaining} minutes.`, 'error');
+                this.addLine('', 'output');
+                this.createInputDisplay();
+                this.currentInput = '';
+                this.updateInputDisplay();
+                return;
+            }
+            
+            this.addLine('INITIATING CLEARANCE PROTOCOL...', 'warning');
+            this.addLine('To access this file, you must identify yourself.', 'info');
+            this.addLine('', 'output');
+            
+            const challenges = [
+                { q: 'What is the name of my programmable IR remote project?', h: '7badc52a25794499da05ab66ac43b7f0f0b6d341bc6f643565f35d366f3bd65b', k: 'EQQUCgMYPhACOkBSV1UyCV8Y' },
+                { q: 'What is the name of my full-stack e-commerce project?', h: '32e02d937c0e20a578f66d04254d7f67ec95020784fe538b5365fab9aa4c09df', k: 'EQgeFQQaKwYUNllCV1orDlEQ' },
+                { q: 'What is the name of my online fundraising system?', h: '4b83e71f0c2bd47e4d49c3383059d86738771b960a81e01cfe94638c3e254518', k: 'AAAdBhgbOBAXN1NJXVMsClsY' },
+                { q: 'What is the name of my steganography password manager?', h: '31ca5ab00722b375b00edf9b7eb556145dc7eb6af7dc72a846f293a4f63ffb15', k: 'AwAGFAwVMRMXLEFdU1ovCkAK' },
+                { q: 'What is the name of my Productivity Browser Extension?', h: '09fb870816e52cb6f978db7de76b6b1a1f44db2e29c88aadf4ced89be27f1df3', k: 'EQgFCxQCPQoGM0dGUF0vB0YP' },
+            ];
+            
+            let availableChallenges = challenges;
+            if (this.lastCvChallenge) {
+                availableChallenges = challenges.filter(c => c.h !== this.lastCvChallenge);
+            }
+            const selectedChallenge = availableChallenges[Math.floor(Math.random() * availableChallenges.length)];
+            this.lastCvChallenge = selectedChallenge.h;
+            
+            this.cvClearanceMode = {
+                active: true,
+                step: 'name',
+                attempts: 0,
+                name: '',
+                org: '',
+                purpose: '',
+                currentChallenge: selectedChallenge
+            };
+            
+            this.createInputDisplay();
+            this.currentInput = '';
+            this.updateCvClearanceDisplay();
+        },
+        
         whoami: () => {
             this.addLine('Saugat Pokharel', 'success');
             this.addLine('Security Enthusiast | Full-Stack Developer | BCA Student', 'info');
@@ -593,6 +1056,15 @@ class Terminal {
         },
 
         ls: (args) => {
+            if (this.currentDirectory !== '/home/saugat') {
+                if (args.includes('-la')) {
+                    this.addLine('total 8', 'output');
+                    this.addLine('drwxr-xr-x  2 saugat saugat 4096 Jan 15 10:30 .', 'output');
+                    this.addLine('drwxr-xr-x  8 saugat saugat 4096 Jan 15 10:30 ..', 'output');
+                }
+                return;
+            }
+
             if (args.includes('-la')) {
                 this.addLine('total 48', 'output');
                 this.addLine('drwxr-xr-x  8 saugat saugat 4096 Jan 15 10:30 .', 'output');
@@ -617,9 +1089,16 @@ class Terminal {
                 parts.pop();
                 this.currentDirectory = parts.join('/') || '/';
             } else {
-                this.currentDirectory = args.startsWith('/') ? args : this.currentDirectory + '/' + args;
+                const newDir = args.startsWith('/') ? args : this.currentDirectory + '/' + args;
+                const allowedDirs = ['/home/saugat', '/home/saugat/projects', '/home/saugat/skills', '/home/saugat/certifications', '/home/saugat/assets', '/home/saugat/scripts'];
+                
+                if (allowedDirs.includes(newDir)) {
+                    this.currentDirectory = newDir;
+                    this.addLine(`Changed directory to: ${this.currentDirectory}`, 'info');
+                } else {
+                    this.addLine(`cd: ${args}: No such file or directory`, 'error');
+                }
             }
-            this.addLine(`Changed directory to: ${this.currentDirectory}`, 'info');
         },
 
         cat: (args) => {
@@ -627,10 +1106,33 @@ class Terminal {
                 'README.md': 'Saugat\'s Portfolio Terminal\n=====================================\nA unique terminal-based portfolio showcasing my skills in web development and cybersecurity.\n\nFeatures:\n- Interactive terminal interface\n- Multiple command support\n- Real-time project information\n- Easter eggs and fun commands',
                 'portfolio.json': '{\n  "name": "Saugat Pokharel",\n  "title": "Full-Stack Developer & Security Enthusiast",\n  "skills": ["Python", "JavaScript", "Django", "Cybersecurity"],\n  "projects": 4,\n  "certifications": 7\n}'
             };
-            if (files[args]) {
+            if (args === 'resume.pdf') {
+                this.addLine('PDF-1.4\n%\n1 0 obj\n<<\n/Title ()\n/Creator ()\n/Producer ()\n/CreationDate ()\n>>\nendobj\n...', 'error');
+                this.addLine('', 'output');
+                this.addLine('[ENCRYPTED PAYLOAD DETECTED]', 'warning');
+                this.addLine('Direct access to this file is restricted.', 'error');
+                this.addLine("Use the 'get-cv' command to initiate the security clearance protocol.", 'success');
+            } else if (files[args]) {
                 this.addLine(files[args], 'info');
             } else {
                 this.addLine(`cat: ${args}: No such file or directory`, 'error');
+            }
+        },
+
+        'resume.pdf': () => {
+            this.commands['cat'].call(this, 'resume.pdf');
+        },
+        
+        './resume.pdf': () => {
+            this.addLine('bash: ./resume.pdf: Permission denied', 'error');
+            this.addLine('Maybe try reading it first?', 'info');
+        },
+        
+        open: (args) => {
+            if (args === 'resume.pdf') {
+                this.commands['cat'].call(this, 'resume.pdf');
+            } else {
+                this.addLine(`open: ${args}: application not found`, 'error');
             }
         },
 

@@ -145,8 +145,9 @@ body::selection {
   color: #fefefe;
   font-family: "Raleway", sans-serif;
   font-size: 24px;
-}             
-.title-first-name>a{
+}
+
+.title-first-name>a {
   text-decoration: none;
   color: #FEFEFE;
 }
@@ -293,7 +294,7 @@ body::selection {
   color: #cacaca;
   font-weight: 500;
   line-height: 25px;
-  text-align:justify;
+  text-align: justify;
 }
 
 .body-title a {
@@ -438,7 +439,7 @@ body::selection {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 10px 14px !important; 
+  padding: 10px 14px !important;
   border-radius: 10px;
   border: 1px solid #64f4ac66;
   background: #2d2e32;
@@ -571,7 +572,7 @@ body::selection {
 .email-form {
   display: flex;
   flex-direction: column;
-  height: 300px;
+  min-height: 420px;
   width: 80%;
   justify-content: space-between;
   border-radius: 10px;
@@ -594,12 +595,24 @@ body::selection {
   color: #64f4ac;
 }
 
-.email-form input {
-  height: 36px;
-  margin: 10;
+.email-form input,
+.email-form textarea {
+  margin: 10px 0;
   border-radius: 8px;
   border: none;
-  padding: 4px 8px;
+  padding: 8px 12px;
+  background-color: rgba(255, 255, 255, 0.95);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.email-form input {
+  height: 36px;
+}
+
+.email-form textarea {
+  min-height: 80px;
+  resize: vertical;
 }
 
 .email-form div {
@@ -874,6 +887,8 @@ body::selection {
   .email-form {
     width: 100%;
     height: auto;
+    padding: 2rem;
+    box-sizing: border-box;
   }
 
 
@@ -926,7 +941,7 @@ body::selection {
     font-weight: 200;
     text-align: justify;
     width: 100%;
-    
+
   }
 
   .body-title a {

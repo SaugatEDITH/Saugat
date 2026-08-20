@@ -99,10 +99,10 @@
                     <a href="https://www.linkedin.com/in/saugat-pokharel-63390323a/">LET'S Connect!</a>
                 </div>
                 <div class="body-tail">
-                    <h1>7+
+                    <h1>5+
                     </h1>
-                    <p>Certificatons<br>EXPERIENCE</p>
-                    <h1>4</h1>
+                    <p>Certifications<br>EXPERIENCE</p>
+                    <h1>7+</h1>
                     <p>PROJECTS<br>COMPLETED</p>
                 </div>
             </div>
@@ -149,7 +149,10 @@ Outside of technology, I love trekking and gaming, which balance my creative and
 My goal is to build secure and efficient systems that solve real-world problems.
 I am driven by curiosity and a passion to innovate at the intersection of software development and cybersecurity.
                     </p>
-                    <a href="terminal.html" class="terminal-btn">OPEN TERMINAL</a>
+                    <div style="display: flex; gap: 15px; margin-top: 20px;">
+                        <a href="terminal.html" class="terminal-btn">OPEN TERMINAL</a>
+                        <a href="terminal.html?cmd=get-cv" class="terminal-btn"><i class="fa-solid fa-lock" style="font-size: 12px;"></i> ENCRYPTED CV</a>
+                    </div>
                 </div>
 
             </div>
@@ -307,9 +310,11 @@ I am driven by curiosity and a passion to innovate at the intersection of softwa
                         id="name" placeholder="Your name" required>
                     <input title="Enter valid email!" pattern="[^\s@]+@[^\s@]+\.[^\s@]+" type="email" name="email"
                         id="email" placeholder="Email Address" required>
+                    <textarea title="Message must be at least 2 characters!" minlength="2" name="message" id="message" placeholder="Your message..." rows="4" required></textarea>
                     <div>
                         <input title="Enter valid phone number!" type="tel" name="phone-number" id="phone-number"
                             placeholder="Phone number" pattern="(97|98)\d{7,8}" required>
+                            
                         <button type="submit">Send</button>
                     </div>
             </form>

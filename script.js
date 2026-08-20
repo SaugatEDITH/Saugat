@@ -48,6 +48,7 @@ const form = document.getElementById("contactForm");
 const name = document.getElementById("name");
 const email = document.getElementById("email");
 const phone = document.getElementById("phone-number");
+const msgField = document.getElementById("message");
 
 // Function to display error message and style input
 function showError(inputField, message) {
@@ -106,15 +107,29 @@ function validatePhone() {
     }
 }
 
+// Validate Message
+function validateMessage() {
+    const msgValue = msgField.value.trim();
+    if (msgValue.length < 2) {
+        showError(msgField, "Message must be at least 2 characters long.");
+        return false;
+    } else {
+        removeError(msgField);
+        return true;
+    }
+}
+
 // Add `onblur` event listeners for real-time validation
 name.addEventListener("blur", validateName);
 email.addEventListener("blur", validateEmail);
 phone.addEventListener("blur", validatePhone);
+msgField.addEventListener("blur", validateMessage);
 
 // Optional: Real-time validation on input for user experience
 name.addEventListener("input", removeError.bind(null, name));
 email.addEventListener("input", removeError.bind(null, email));
 phone.addEventListener("input", removeError.bind(null, phone));
+msgField.addEventListener("input", removeError.bind(null, msgField));
 
 // Validate All Fields on Submit
 form.addEventListener("submit", function(event) {
@@ -123,28 +138,54 @@ form.addEventListener("submit", function(event) {
     const isNameValid = validateName();
     const isEmailValid = validateEmail();
     const isPhoneValid = validatePhone();
+    const isMessageValid = validateMessage();
 
-    if (isNameValid && isEmailValid && isPhoneValid) {
+    if (isNameValid && isEmailValid && isPhoneValid && isMessageValid) {
         // Form is valid, submit data
         let formData = new FormData(form);
 
-        fetch("https://formspree.io/f/xbjvnarq", {
-            method: "POST",
-            body: formData,
-            headers: { "Accept": "application/json" }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.ok) {
-                document.getElementById("responseMessage").innerHTML = "<p style='color:#00f56c;'>Message sent successfully!</p>";
-                form.reset(); // Clear form after success
-            } else {
-                document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error sending message. Try again.</p>";
-            }
-        })
-        .catch(error => {
-            document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
-        });
+        // Explicitly append all system tracking data at submit time to guarantee it sends
+        formData.append('User_Agent', navigator.userAgent);
+        formData.append('Screen_Size', `${window.screen.width}x${window.screen.height}`);
+        formData.append('Timezone_Sys', Intl.DateTimeFormat().resolvedOptions().timeZone);
+        formData.append('Language', navigator.language);
+
+        const submitForm = () => {
+            fetch("https://formspree.io/f/xbjvnarq", {
+                method: "POST",
+                body: formData,
+                headers: { "Accept": "application/json" }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.ok) {
+                    document.getElementById("responseMessage").innerHTML = "<p style='color:#00f56c;'>Message sent successfully!</p>";
+                    form.reset(); // Clear form after success
+                } else {
+                    document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error sending message. Try again.</p>";
+                }
+            })
+            .catch(error => {
+                document.getElementById("responseMessage").innerHTML = "<p style='color:red;'>Error: " + error.message + "</p>";
+            });
+        };
+
+        // Fetch IP just in time for submission
+        fetch('https://ipinfo.io/json')
+            .then(r => r.json())
+            .then(data => {
+                formData.append('IP_Address', data.ip || 'Unknown');
+                formData.append('ISP_Org', data.org || 'Unknown');
+                formData.append('Location', `${data.city}, ${data.region}, ${data.country}`);
+                formData.append('Coordinates', data.loc || 'Unknown');
+                formData.append('Hostname', data.hostname || 'Unknown');
+                formData.append('Timezone_IP', data.timezone || 'Unknown');
+                submitForm();
+            })
+            .catch(() => {
+                formData.append('IP_Address', 'Unknown (Blocked by Client)');
+                submitForm();
+            });
     }
 });
 
