@@ -45,10 +45,14 @@ class Terminal {
         this.mobileInput = document.createElement('input');
         this.mobileInput.type = 'text';
         this.mobileInput.id = 'mobile-keyboard-input';
-        this.mobileInput.style.position = 'absolute';
+        this.mobileInput.style.position = 'fixed';
         this.mobileInput.style.opacity = '0';
-        this.mobileInput.style.top = '-1000px';
-        this.mobileInput.style.left = '-1000px';
+        this.mobileInput.style.top = '0';
+        this.mobileInput.style.left = '0';
+        this.mobileInput.style.width = '1px';
+        this.mobileInput.style.height = '1px';
+        this.mobileInput.style.pointerEvents = 'none';
+        this.mobileInput.style.zIndex = '-1';
         this.mobileInput.setAttribute('autocapitalize', 'none');
         this.mobileInput.setAttribute('autocomplete', 'off');
         this.mobileInput.setAttribute('spellcheck', 'false');
