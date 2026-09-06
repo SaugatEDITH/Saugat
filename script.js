@@ -509,6 +509,13 @@ document.addEventListener('DOMContentLoaded', () => {
         // Visual feedback while waiting
         geminiSpinner.style.background = 'linear-gradient(45deg, #00ff87, #60efff)';
         
+        // Add a temporary loading message
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'chat-msg ai loading-indicator';
+        loadingDiv.innerHTML = '<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>';
+        chatHistory.appendChild(loadingDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+        
         try {
             // Pass history to backend
             const backendHistory = chatSessionHistory.map(msg => ({ role: msg.sender === 'user' ? 'user' : 'model', parts: [{text: msg.text}] }));
@@ -527,10 +534,17 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const data = await response.json();
+            
+            // Remove the loading message before typing effect
+            chatHistory.removeChild(loadingDiv);
+            
             typeWriterEffect('ai', data.reply || data.error);
             
         } catch (error) {
             console.error('Chat error:', error);
+            if (chatHistory.contains(loadingDiv)) {
+                chatHistory.removeChild(loadingDiv);
+            }
             appendAndSaveMessage('system', '[CONNECTION ERROR] Unable to reach EDITH. Please try again in a moment.');
         } finally {
             isWaitingForResponse = false;

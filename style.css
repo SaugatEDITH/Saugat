@@ -1323,6 +1323,40 @@ body::selection {
     margin-right: 4px;
 }
 
+/* AI loading indicator */
+.loading-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 20px;
+    padding: 12px 18px;
+}
+
+.typing-dot {
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background-color: #64f4ac;
+    border-radius: 50%;
+    animation: bounce 1.4s infinite ease-in-out both;
+}
+
+.typing-dot:nth-child(1) {
+    animation-delay: -0.32s;
+}
+
+.typing-dot:nth-child(2) {
+    animation-delay: -0.16s;
+}
+
+@keyframes bounce {
+    0%, 80%, 100% { 
+        transform: scale(0);
+    } 40% { 
+        transform: scale(1);
+    }
+}
+
 
 @media (max-width: 768px) {
 
