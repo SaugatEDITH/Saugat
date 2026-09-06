@@ -1,0 +1,158 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <!-- Drop shadow and neon glow -->
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#64f4ac" flood-opacity="0.9"/>
+    </filter>
+    
+    <!-- Gradients for 3D glassy/bubble effect -->
+    <radialGradient id="bodyGrad" cx="35%" cy="25%" r="75%">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="70%" stop-color="#e6e6e6"/>
+      <stop offset="100%" stop-color="#b3b3b3"/>
+    </radialGradient>
+    
+    <radialGradient id="pinkGrad" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#ffccf2"/>
+      <stop offset="100%" stop-color="#ff66b2"/>
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#glow)">
+    
+    <!-- Tail (animated) -->
+    <g class="tail" transform-origin="25px 80px">
+      <path d="M 35 80 Q 5 100 5 70 Q 7 55 15 60 Q 25 70 25 80 Z" fill="url(#bodyGrad)"/>
+    </g>
+
+    <!-- Head and Body Group (animated head bob and tilt) -->
+    <g class="head" transform-origin="50px 70px">
+      
+      <!-- Ears (animated twitch) -->
+      <g class="ear-l" transform-origin="25px 45px">
+        <path d="M 25,45 Q 15,15 30,12 Q 40,20 45,32 Z" fill="url(#bodyGrad)"/>
+        <path d="M 27,40 Q 22,22 30,18 Q 35,25 38,32 Z" fill="url(#pinkGrad)"/>
+      </g>
+      <g class="ear-r" transform-origin="75px 45px">
+        <path d="M 75,45 Q 85,15 70,12 Q 60,20 55,32 Z" fill="url(#bodyGrad)"/>
+        <path d="M 73,40 Q 78,22 70,18 Q 65,25 62,32 Z" fill="url(#pinkGrad)"/>
+      </g>
+      
+      <!-- Head Base -->
+      <circle cx="50" cy="55" r="34" fill="url(#bodyGrad)"/>
+      
+      <!-- Blushing Cheeks (animated pulse) -->
+      <g class="blush" transform-origin="50px 58px">
+        <ellipse cx="28" cy="58" rx="7" ry="3.5" fill="#ff66b2" opacity="0.6"/>
+        <ellipse cx="72" cy="58" rx="7" ry="3.5" fill="#ff66b2" opacity="0.6"/>
+      </g>
+      
+      <!-- Eyes (Animated double blink) -->
+      <g class="eyes">
+        <circle cx="37" cy="50" r="5" fill="#1a1a1a"/>
+        <circle cx="63" cy="50" r="5" fill="#1a1a1a"/>
+        <!-- Eye Highlights for cute anime look -->
+        <circle cx="35" cy="48" r="2" fill="#ffffff"/>
+        <circle cx="61" cy="48" r="2" fill="#ffffff"/>
+        <circle cx="38" cy="51" r="0.8" fill="#ffffff"/>
+        <circle cx="64" cy="51" r="0.8" fill="#ffffff"/>
+      </g>
+      
+      <!-- Blinking Eyes (Closed state) -->
+      <g class="eyes-closed" style="opacity:0;">
+        <path d="M 32 50 Q 37 47 42 50" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+        <path d="M 58 50 Q 63 47 68 50" stroke="#1a1a1a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </g>
+      
+      <!-- Nose & Mouth -->
+      <path d="M 50 58 L 47 54 L 53 54 Z" fill="url(#pinkGrad)"/>
+      <path d="M 50 58 Q 46 64 42 60" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <path d="M 50 58 Q 54 64 58 60" stroke="#1a1a1a" stroke-width="2" fill="none" stroke-linecap="round"/>
+      
+      <!-- Whiskers (animated wiggle) -->
+      <g class="whiskers">
+        <path d="M 20 55 Q 12 52 5 50" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <path d="M 18 62 Q 10 63 5 65" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <path d="M 80 55 Q 88 52 95 50" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+        <path d="M 82 62 Q 90 63 95 65" stroke="#1a1a1a" stroke-width="1.5" stroke-linecap="round" opacity="0.4"/>
+      </g>
+    </g>
+    
+    <!-- Waving Paw (enhanced 3D arm) -->
+    <g class="paw" transform-origin="82px 75px">
+      <!-- Arm -->
+      <path d="M 72 88 Q 98 70 88 45 Q 75 55 65 75 Z" fill="url(#bodyGrad)"/>
+      <!-- Paw Base -->
+      <circle cx="82" cy="47" r="11" fill="url(#bodyGrad)"/>
+      <!-- Pink Pads -->
+      <circle cx="82" cy="48" r="4.5" fill="url(#pinkGrad)"/>
+      <circle cx="75" cy="41" r="2.5" fill="url(#pinkGrad)"/>
+      <circle cx="82" cy="38" r="2.5" fill="url(#pinkGrad)"/>
+      <circle cx="89" cy="41" r="2.5" fill="url(#pinkGrad)"/>
+    </g>
+  </g>
+  
+  <style>
+    /* Head Bobbing/Tilting */
+    .head { animation: bob 3s infinite ease-in-out; }
+    @keyframes bob {
+      0%, 100% { transform: rotate(-2deg) translateY(0px); }
+      50% { transform: rotate(3deg) translateY(2px); }
+    }
+    
+    /* Ear Twitching (Asymmetric) */
+    .ear-l { animation: twitch-l 4s infinite ease-in-out; }
+    .ear-r { animation: twitch-r 4s infinite ease-in-out; animation-delay: 0.5s; }
+    @keyframes twitch-l {
+      0%, 90%, 100% { transform: rotate(0deg); }
+      93% { transform: rotate(-12deg); }
+      96% { transform: rotate(6deg); }
+    }
+    @keyframes twitch-r {
+      0%, 90%, 100% { transform: rotate(0deg); }
+      93% { transform: rotate(12deg); }
+      96% { transform: rotate(-6deg); }
+    }
+
+    /* Tail Wagging */
+    .tail { animation: wag 1.5s infinite ease-in-out; }
+    @keyframes wag {
+      0%, 100% { transform: rotate(0deg); }
+      50% { transform: rotate(-20deg); }
+    }
+
+    /* Whisker Wiggle */
+    .whiskers { animation: wiggle 2s infinite ease-in-out; }
+    @keyframes wiggle {
+      0%, 100% { transform: translateY(0px) scaleY(1); }
+      50% { transform: translateY(1px) scaleY(0.9); }
+    }
+
+    /* Blush Pulse */
+    .blush { animation: pulse 2s infinite ease-in-out; }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 0.9; transform: scale(1.1); }
+    }
+
+    /* Waving Paw */
+    .paw { animation: wave 0.35s infinite alternate ease-in-out; }
+    @keyframes wave {
+      0% { transform: rotate(-15deg); }
+      100% { transform: rotate(35deg); }
+    }
+    
+    /* Double Blinking Eyes */
+    .eyes { animation: blink-open 4s infinite; }
+    .eyes-closed { animation: blink-closed 4s infinite; }
+    
+    @keyframes blink-open {
+      0%, 88%, 92%, 96%, 100% { opacity: 1; }
+      90%, 94% { opacity: 0; }
+    }
+    @keyframes blink-closed {
+      0%, 88%, 92%, 96%, 100% { opacity: 0; }
+      90%, 94% { opacity: 1; }
+    }
+  </style>
+</svg>

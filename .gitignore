@@ -1,3 +1,7 @@
 # Private scripts & source CV
 scripts/
 node_modules/
+.env
+vercel-upload/
+ai/
+api/

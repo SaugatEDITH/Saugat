@@ -270,3 +270,286 @@ function setupPrewarmOnSmallScroll() {
 }
 
 setupPrewarmOnSmallScroll();
+
+// --- AI Chat Logic ---
+document.addEventListener('DOMContentLoaded', () => {
+    const chatInput = document.getElementById('ai-chat-input');
+    const sendBtn = document.getElementById('ai-chat-send');
+    const closeBtn = document.getElementById('ai-chat-close');
+    const chatContainer = document.getElementById('ai-chat-input-container');
+    const chatOverlay = document.getElementById('ai-chat-overlay');
+    const chatHistory = document.getElementById('ai-chat-history');
+    const geminiSpinner = document.querySelector('.gemini-spinner');
+
+    // Only proceed if chat UI elements exist
+    if (!chatInput || !chatContainer) return;
+
+    let isChatActive = false;
+    let isWaitingForResponse = false;
+    let chatSessionHistory = JSON.parse(sessionStorage.getItem('aiChatHistory') || '[]');
+
+    // NOTE: If deploying frontend to GitHub Pages, GitHub cannot run the backend.
+    // You MUST deploy this repository to Vercel (which runs the api/chat.js).
+    // Once deployed to Vercel, replace the production URL below with your actual Vercel domain.
+    const VERCEL_BACKEND_URL = 'https://ai-iota-ochre-48.vercel.app/api/chat'; 
+    const apiUrl = VERCEL_BACKEND_URL; // Always use Vercel backend (even for local testing)
+
+    // Wake up Vercel backend on first type to mitigate cold starts
+    let hasPinged = false;
+    chatInput.addEventListener('input', () => {
+        if (!hasPinged) {
+            hasPinged = true;
+            fetch(apiUrl, { method: 'OPTIONS' }).catch(() => {});
+        }
+    });
+
+    // Initialize history from sessionStorage
+    if (chatSessionHistory.length > 0) {
+        chatSessionHistory.forEach(msg => {
+            appendMessageRaw(msg.sender, msg.text);
+        });
+    } else {
+        appendMessageRaw('system', 'System Online. Type your message to communicate with AI Assistant.');
+    }
+
+    function saveHistory() {
+        sessionStorage.setItem('aiChatHistory', JSON.stringify(chatSessionHistory));
+    }
+
+    function appendMessageRaw(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg ' + sender;
+        msgDiv.textContent = text;
+        chatHistory.appendChild(msgDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function appendAndSaveMessage(sender, text) {
+        appendMessageRaw(sender, text);
+        chatSessionHistory.push({ sender, text });
+        saveHistory();
+    }
+
+    function activateChat() {
+        if (!isChatActive) {
+            isChatActive = true;
+            chatContainer.classList.add('active-chat');
+            chatContainer.classList.remove('minimized-bubble');
+            chatOverlay.classList.add('active');
+            closeBtn.style.display = 'block';
+            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            setTimeout(() => {
+                chatInput.focus();
+            }, 300);
+        }
+    }
+
+    function closeChat() {
+        if (isChatActive) {
+            isChatActive = false;
+            chatContainer.classList.remove('active-chat');
+            chatOverlay.classList.remove('active');
+            closeBtn.style.display = 'none';
+            document.body.style.overflow = '';
+            chatInput.blur();
+            checkScroll(); // Re-apply bubble state if needed
+        }
+    }
+
+    function handleInputClick() {
+        if (chatSessionHistory.length > 0) {
+            activateChat();
+        }
+    }
+    chatInput.addEventListener('focus', handleInputClick);
+    chatInput.addEventListener('click', handleInputClick);
+    closeBtn.addEventListener('click', closeChat);
+    // Toggle bubble state on scroll
+    function checkScroll() {
+        if (isChatActive) return; // Don't minimize if chat is active
+        if (window.scrollY > 150) {
+            chatContainer.classList.add('minimized-bubble');
+        } else {
+            chatContainer.classList.remove('minimized-bubble');
+        }
+    }
+    
+    window.addEventListener('scroll', checkScroll, { passive: true });
+    
+    // If clicking on container when it's a bubble, activate chat
+    chatContainer.addEventListener('click', (e) => {
+        if (chatContainer.classList.contains('minimized-bubble')) {
+            activateChat();
+        }
+    });
+
+    closeBtn.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent bubbling to container click
+        closeChat();
+    });
+
+    chatInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !isWaitingForResponse) {
+            sendMessage();
+        }
+    });
+
+    sendBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (!isWaitingForResponse) {
+            sendMessage();
+        }
+    });
+
+    // Close on overlay click
+    chatOverlay.addEventListener('click', (e) => {
+        if (e.target === chatOverlay || e.target === document.getElementById('ai-chat-3d-canvas')) {
+            closeChat();
+        }
+    });
+
+    async function sendMessage() {
+        const message = chatInput.value.trim();
+        if (!message) return;
+
+        activateChat();
+        
+        chatInput.value = '';
+        appendAndSaveMessage('user', '> ' + message);
+        
+        isWaitingForResponse = true;
+        // Visual feedback while waiting
+        geminiSpinner.style.background = 'linear-gradient(45deg, #00ff87, #60efff)';
+        
+        try {
+            // Pass history to backend
+            const backendHistory = chatSessionHistory.map(msg => ({ role: msg.sender === 'user' ? 'user' : 'model', parts: [{text: msg.text}] }));
+
+            const response = await fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-App-Token': 'SAUGAT_PORTFOLIO_AI_SECRET' // Set this exact value as VERCEL_APP_TOKEN in Vercel Environment Variables
+                },
+                body: JSON.stringify({ message: message, history: backendHistory })
+            });
+
+            if (!response.ok) {
+                throw new Error('API Error: ' + response.status);
+            }
+
+            const data = await response.json();
+            typeWriterEffect('ai', data.reply || data.error);
+            
+        } catch (error) {
+            console.error('Chat error:', error);
+            appendAndSaveMessage('system', 'Connection failed. [System Note: Make sure the Vercel backend /api/chat is deployed and CORS/Tokens are configured]');
+        } finally {
+            isWaitingForResponse = false;
+            // Reset spinner color
+            geminiSpinner.style.background = 'linear-gradient(45deg, #4285f4, #9b72cb, #d96570, #f4b400)';
+        }
+    }
+
+    function appendMessage(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg ' + sender;
+        msgDiv.textContent = text;
+        chatHistory.appendChild(msgDiv);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function typeWriterEffect(sender, text) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'chat-msg ' + sender;
+        chatHistory.appendChild(msgDiv);
+        
+        let i = 0;
+        msgDiv.textContent = '█'; // Cursor
+        
+        const speed = 10; // Typing speed in ms
+        
+        function type() {
+            if (i < text.length) {
+                msgDiv.textContent = text.substring(0, i + 1) + '█';
+                i++;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                setTimeout(type, speed);
+            } else {
+                msgDiv.textContent = text; // Remove cursor when done
+                chatSessionHistory.push({ sender, text });
+                saveHistory();
+            }
+        }
+        
+        setTimeout(type, 50);
+    }
+    
+    // --- 3D Background Effect ---
+    function init3DBackground() {
+        const canvas = document.getElementById('ai-chat-3d-canvas');
+        if (!canvas || !window.THREE) return;
+        
+        const renderer = new THREE.WebGLRenderer({ canvas, alpha: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 30;
+        
+        // Particles
+        const geometry = new THREE.BufferGeometry();
+        const particlesCount = 2000;
+        const posArray = new Float32Array(particlesCount * 3);
+        
+        for(let i = 0; i < particlesCount * 3; i++) {
+            posArray[i] = (Math.random() - 0.5) * 100;
+        }
+        
+        geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+        const material = new THREE.PointsMaterial({
+            size: 0.15,
+            color: 0x64f4ac,
+            transparent: true,
+            opacity: 0.8
+        });
+        
+        const particlesMesh = new THREE.Points(geometry, material);
+        scene.add(particlesMesh);
+        
+        // Gorgeous but SUBTLE Torus Knot (Mobius-like)
+        const knotGeo = new THREE.TorusKnotGeometry(12, 1.5, 200, 32);
+        const knotMat = new THREE.MeshBasicMaterial({ 
+            color: 0x64f4ac, 
+            wireframe: true, 
+            transparent: true, 
+            opacity: 0.12, 
+            blending: THREE.AdditiveBlending
+        });
+        const knot = new THREE.Mesh(knotGeo, knotMat);
+        scene.add(knot);
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            particlesMesh.rotation.y += 0.0005;
+            particlesMesh.rotation.x += 0.0002;
+            
+            knot.rotation.x += 0.001;
+            knot.rotation.y += 0.0015;
+            knot.rotation.z -= 0.0005;
+            
+            renderer.render(scene, camera);
+        }
+        
+        animate();
+        
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+    }
+    
+    init3DBackground();
+});

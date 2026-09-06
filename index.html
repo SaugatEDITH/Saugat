@@ -85,6 +85,20 @@
 
     <div id="main">
 
+        <!-- AI Chat Interface -->
+        <div id="ai-chat-overlay" class="glassmorphism-hidden">
+            <canvas id="ai-chat-3d-canvas"></canvas>
+            <div id="ai-chat-history"></div>
+        </div>
+        <div id="ai-chat-input-container">
+            <div class="gemini-icon">
+                <div class="gemini-spinner"></div>
+            </div>
+            <input type="text" id="ai-chat-input" placeholder="Ask AI about me..." autocomplete="off">
+            <button id="ai-chat-send"><i class="fa-solid fa-paper-plane"></i></button>
+            <button id="ai-chat-close" style="display:none;"><i class="fa-solid fa-times"></i></button>
+        </div>
+
         <section id="content-body">
             <div class="body-part-1">
                 <div class="developer-intro">
@@ -485,7 +499,5 @@ I am driven by curiosity and a passion to innovate at the intersection of softwa
     </script>
 
 </body>
-<script src="script.js"></script>
 </body>
-
 </html>
