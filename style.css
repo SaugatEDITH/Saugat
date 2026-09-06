@@ -1000,8 +1000,7 @@ body::selection {
     box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
-
-
+    z-index: 1001;
   }
 
   #header.open {
@@ -1016,7 +1015,7 @@ body::selection {
     font-size: 2.8rem;
     color: white;
     cursor: pointer;
-    z-index: 999;
+    z-index: 1002;
     display: block;
   }
 
@@ -1304,40 +1303,24 @@ body::selection {
     to { opacity: 1; transform: translateY(0); }
 }
 
-/* Social / URL links rendered inside AI chat bubbles */
-.chat-msg a.chat-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 10px;
-    margin: 3px 4px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
+/* Elegant inline links for AI chat messages */
+.chat-msg a {
+    color: #64f4ac;
     text-decoration: none;
-    color: #2d2e32;
-    background: #64f4ac;
-    border: 1px solid rgba(100, 244, 172, 0.6);
-    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
-    vertical-align: middle;
+    font-weight: 600;
+    border-bottom: 1px dashed rgba(100, 244, 172, 0.5);
+    transition: all 0.2s ease;
+    padding: 0 2px;
 }
 
-.chat-msg a.chat-link:hover {
-    background: #fff;
-    color: #2d2e32;
-    transform: scale(1.05);
+.chat-msg a:hover {
+    color: #fff;
+    border-bottom: 1px solid #fff;
+    text-shadow: 0 0 5px rgba(100, 244, 172, 0.5);
 }
 
-.chat-msg a.chat-link i {
-    font-size: 13px;
-}
-
-/* Wrapper so links inside AI messages wrap nicely */
-.chat-msg .chat-links-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 8px;
+.chat-msg a i {
+    margin-right: 4px;
 }
 
 
@@ -1388,13 +1371,12 @@ body::selection {
     /* ---------- CHAT HISTORY ---------- */
     #ai-chat-history {
         flex: 1;
-        /* top padding clears the nav bar; bottom padding clears the pinned input */
-        padding: 70px 12px 70px 12px;
+        /* top padding clears the nav bar; bottom padding (90px) keeps the last message visible above the 56px pinned input */
+        padding: 80px 12px 90px 12px;
         margin-bottom: 0;
-        gap: 10px;
+        gap: 12px;
         overflow-y: auto;
-        /* Prevent history from growing behind the keyboard */
-        max-height: calc(100dvh - 56px);
+        /* Let flex: 1 handle the height naturally within the 100dvh overlay */
     }
 
     /* ---------- BUBBLE (minimized state) ---------- */

@@ -285,6 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!chatInput || !chatContainer) return;
 
     let isChatActive = false;
+    window.isChatActive = false;
     let isWaitingForResponse = false;
     let chatSessionHistory = JSON.parse(sessionStorage.getItem('aiChatHistory') || '[]');
 
@@ -338,46 +339,45 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Parse a text string containing markdown links [label](url) and
-     * build a DocumentFragment with plain text nodes + styled <a> chips.
+     * build a DocumentFragment with plain text nodes + inline <a> tags.
      */
     function renderMessageContent(text) {
         const fragment = document.createDocumentFragment();
         const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
         let lastIndex = 0;
         let match;
-        const links = [];
 
         while ((match = mdLinkRegex.exec(text)) !== null) {
             // Text before this link
             if (match.index > lastIndex) {
                 fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
             }
-            links.push({ label: match[1], url: match[2] });
+            
+            const label = match[1];
+            const url = match[2];
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.target = '_blank';
+            a.rel = 'noopener noreferrer';
+            
+            // Add icon if applicable
+            const iconClass = iconForLink(label, url);
+            if (iconClass) {
+                const icon = document.createElement('i');
+                icon.className = iconClass;
+                a.appendChild(icon);
+            }
+            a.appendChild(document.createTextNode(label));
+            
+            fragment.appendChild(a);
+            
             lastIndex = match.index + match[0].length;
         }
+        
         // Remaining text after last link
         if (lastIndex < text.length) {
             fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-        }
-
-        if (links.length > 0) {
-            // Append a flex row of chip links below the text
-            const row = document.createElement('div');
-            row.className = 'chat-links-row';
-            links.forEach(({ label, url }) => {
-                const a = document.createElement('a');
-                a.className = 'chat-link';
-                a.href = url;
-                a.target = '_blank';
-                a.rel = 'noopener noreferrer';
-                // Icon
-                const icon = document.createElement('i');
-                icon.className = iconForLink(label, url);
-                a.appendChild(icon);
-                a.appendChild(document.createTextNode(' ' + label));
-                row.appendChild(a);
-            });
-            fragment.appendChild(row);
         }
 
         return fragment;
@@ -406,6 +406,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function activateChat() {
         if (!isChatActive) {
             isChatActive = true;
+            window.isChatActive = true;
             // Save scroll before position:fixed resets it
             savedScrollY = window.scrollY;
 
@@ -427,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function closeChat() {
         if (isChatActive) {
             isChatActive = false;
+            window.isChatActive = false;
             chatContainer.classList.remove('active-chat');
             chatOverlay.classList.remove('active');
             closeBtn.style.display = 'none';
@@ -624,6 +626,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         function animate() {
             requestAnimationFrame(animate);
+            if (!window.isChatActive) return;
             
             particlesMesh.rotation.y += 0.0005;
             particlesMesh.rotation.x += 0.0002;

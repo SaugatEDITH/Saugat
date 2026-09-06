@@ -461,6 +461,7 @@ I am driven by curiosity and a passion to innovate at the intersection of softwa
 
         function animate() {
             requestAnimationFrame(animate);
+            if (window.isChatActive) return;
 
             // Rotate Hexagon Grid
             hexagonGrid.rotation.y += 0.002;
