@@ -337,7 +337,8 @@ document.addEventListener('DOMContentLoaded', () => {
             chatContainer.classList.remove('minimized-bubble');
             chatOverlay.classList.add('active');
             closeBtn.style.display = 'block';
-            document.body.style.overflow = 'hidden'; // Prevent background scroll
+            document.body.classList.add('chat-open');       // lock background scroll
+            document.documentElement.classList.add('chat-open');
             setTimeout(() => {
                 chatInput.focus();
             }, 300);
@@ -350,11 +351,13 @@ document.addEventListener('DOMContentLoaded', () => {
             chatContainer.classList.remove('active-chat');
             chatOverlay.classList.remove('active');
             closeBtn.style.display = 'none';
-            document.body.style.overflow = '';
+            document.body.classList.remove('chat-open');    // restore background scroll
+            document.documentElement.classList.remove('chat-open');
             chatInput.blur();
             checkScroll(); // Re-apply bubble state if needed
         }
     }
+
 
     function handleInputClick() {
         if (chatSessionHistory.length > 0) {

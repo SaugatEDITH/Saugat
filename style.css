@@ -16,6 +16,13 @@ body {
   overflow-x: hidden;
 }
 
+/* Lock background scroll when chat is open */
+body.chat-open {
+  overflow: hidden;
+  height: 100%;
+}
+
+
 h1 {
   font-size: 50px;
   font-weight: 400;
@@ -1207,6 +1214,7 @@ body::selection {
     flex-direction: column;
     padding: 100px 10% 100px 10%;
     box-sizing: border-box;
+    overflow: hidden; /* prevent overlay itself from scrolling */
 }
 
 #ai-chat-3d-canvas {
@@ -1294,12 +1302,70 @@ body::selection {
 }
 
 @media (max-width: 768px) {
+
+    /* ---------- INPUT BAR (default/idle state) ---------- */
     #ai-chat-input-container {
-        top: 80px;
-        width: 95%;
+        top: 72px;
+        width: 92%;
+        max-width: none;
     }
+
+    /* ---------- INPUT BAR (active / fullscreen state) ---------- */
+    #ai-chat-input-container.active-chat {
+        /* Pin the input bar to the very bottom, above the keyboard */
+        top: auto;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        transform: none;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+        border-bottom: none;
+        border-top: 1px solid rgba(100, 244, 172, 0.3);
+        padding: 0 12px;
+        height: 56px;
+        /* Stay above the overlay so it's always reachable */
+        z-index: 1001;
+    }
+
+    /* ---------- FULLSCREEN OVERLAY ---------- */
     #ai-chat-overlay {
-        padding: 80px 5% 100px 5%;
+        /* Use dvh (dynamic viewport height) so it shrinks when the
+           mobile keyboard appears; fall back to 100vh for older browsers */
+        height: 100vh;
+        height: 100dvh;
+        padding: 0;
+        /* Flex column: chat history fills space, input bar is outside */
+        flex-direction: column;
+        justify-content: flex-start;
     }
-}/* cache burst */
-/* cache burst */
+
+    /* ---------- CHAT HISTORY ---------- */
+    #ai-chat-history {
+        /* Fill all space above the pinned input bar (56px) */
+        flex: 1;
+        padding: 70px 12px 12px 12px; /* top gap clears the nav */
+        margin-bottom: 56px; /* room for the pinned input bar */
+        gap: 10px;
+    }
+
+    /* ---------- BUBBLE (minimized state) ---------- */
+    #ai-chat-input-container.minimized-bubble {
+        bottom: 20px;
+        left: auto;
+        right: 16px;
+        transform: none;
+        width: 56px;
+        height: 56px;
+    }
+
+    /* ---------- MESSAGE BUBBLES ---------- */
+    .chat-msg {
+        max-width: 92%;
+        font-size: 14px;
+        padding: 10px 14px;
+    }
+}
