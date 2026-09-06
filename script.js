@@ -312,6 +312,77 @@ document.addEventListener('DOMContentLoaded', () => {
         appendMessageRaw('system', 'System Online. Type your message to communicate with AI Assistant.');
     }
 
+    // Map link labels / hostnames to Font Awesome icon classes
+    const SOCIAL_ICON_MAP = {
+        linkedin:  'fa-brands fa-linkedin-in',
+        github:    'fa-brands fa-github',
+        instagram: 'fa-brands fa-instagram',
+        twitter:   'fa-brands fa-twitter',
+        x:         'fa-brands fa-x-twitter',
+        youtube:   'fa-brands fa-youtube',
+        facebook:  'fa-brands fa-facebook-f',
+        gmail:     'fa-regular fa-envelope',
+        email:     'fa-regular fa-envelope',
+        mail:      'fa-regular fa-envelope',
+        website:   'fa-solid fa-globe',
+        portfolio: 'fa-solid fa-globe',
+    };
+
+    function iconForLink(label, url) {
+        const lower = label.toLowerCase();
+        for (const [key, cls] of Object.entries(SOCIAL_ICON_MAP)) {
+            if (lower.includes(key) || url.toLowerCase().includes(key)) return cls;
+        }
+        return 'fa-solid fa-arrow-up-right-from-square';
+    }
+
+    /**
+     * Parse a text string containing markdown links [label](url) and
+     * build a DocumentFragment with plain text nodes + styled <a> chips.
+     */
+    function renderMessageContent(text) {
+        const fragment = document.createDocumentFragment();
+        const mdLinkRegex = /\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g;
+        let lastIndex = 0;
+        let match;
+        const links = [];
+
+        while ((match = mdLinkRegex.exec(text)) !== null) {
+            // Text before this link
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+            links.push({ label: match[1], url: match[2] });
+            lastIndex = match.index + match[0].length;
+        }
+        // Remaining text after last link
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
+
+        if (links.length > 0) {
+            // Append a flex row of chip links below the text
+            const row = document.createElement('div');
+            row.className = 'chat-links-row';
+            links.forEach(({ label, url }) => {
+                const a = document.createElement('a');
+                a.className = 'chat-link';
+                a.href = url;
+                a.target = '_blank';
+                a.rel = 'noopener noreferrer';
+                // Icon
+                const icon = document.createElement('i');
+                icon.className = iconForLink(label, url);
+                a.appendChild(icon);
+                a.appendChild(document.createTextNode(' ' + label));
+                row.appendChild(a);
+            });
+            fragment.appendChild(row);
+        }
+
+        return fragment;
+    }
+
     function saveHistory() {
         sessionStorage.setItem('aiChatHistory', JSON.stringify(chatSessionHistory));
     }
@@ -319,7 +390,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function appendMessageRaw(sender, text) {
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg ' + sender;
-        msgDiv.textContent = text;
+        msgDiv.appendChild(renderMessageContent(text));
         chatHistory.appendChild(msgDiv);
         chatHistory.scrollTop = chatHistory.scrollHeight;
     }
@@ -330,15 +401,23 @@ document.addEventListener('DOMContentLoaded', () => {
         saveHistory();
     }
 
+    let savedScrollY = 0;
+
     function activateChat() {
         if (!isChatActive) {
             isChatActive = true;
+            // Save scroll before position:fixed resets it
+            savedScrollY = window.scrollY;
+
             chatContainer.classList.add('active-chat');
             chatContainer.classList.remove('minimized-bubble');
             chatOverlay.classList.add('active');
             closeBtn.style.display = 'block';
-            document.body.classList.add('chat-open');       // lock background scroll
+            // Lock background scroll (position:fixed is applied via CSS)
+            document.body.classList.add('chat-open');
             document.documentElement.classList.add('chat-open');
+            // Compensate so fixed body stays at the same visual position
+            document.body.style.top = `-${savedScrollY}px`;
             setTimeout(() => {
                 chatInput.focus();
             }, 300);
@@ -351,12 +430,16 @@ document.addEventListener('DOMContentLoaded', () => {
             chatContainer.classList.remove('active-chat');
             chatOverlay.classList.remove('active');
             closeBtn.style.display = 'none';
-            document.body.classList.remove('chat-open');    // restore background scroll
+            // Restore background scroll
+            document.body.classList.remove('chat-open');
             document.documentElement.classList.remove('chat-open');
+            document.body.style.top = '';
+            window.scrollTo(0, savedScrollY);
             chatInput.blur();
             checkScroll(); // Re-apply bubble state if needed
         }
     }
+
 
 
     function handleInputClick() {
@@ -466,25 +549,32 @@ document.addEventListener('DOMContentLoaded', () => {
         const msgDiv = document.createElement('div');
         msgDiv.className = 'chat-msg ' + sender;
         chatHistory.appendChild(msgDiv);
-        
+
+        // Strip markdown links for the plain-text typewriter display
+        const plainText = text.replace(/\[([^\]]+)\]\(https?:\/\/[^)]+\)/g, '$1');
+
         let i = 0;
         msgDiv.textContent = '█'; // Cursor
-        
+
         const speed = 10; // Typing speed in ms
-        
+
         function type() {
-            if (i < text.length) {
-                msgDiv.textContent = text.substring(0, i + 1) + '█';
+            if (i < plainText.length) {
+                msgDiv.textContent = plainText.substring(0, i + 1) + '█';
                 i++;
                 chatHistory.scrollTop = chatHistory.scrollHeight;
                 setTimeout(type, speed);
             } else {
-                msgDiv.textContent = text; // Remove cursor when done
+                // Replace content with properly rendered version (links as chips)
+                msgDiv.textContent = '';
+                msgDiv.appendChild(renderMessageContent(text));
                 chatSessionHistory.push({ sender, text });
                 saveHistory();
+                chatHistory.scrollTop = chatHistory.scrollHeight;
             }
         }
-        
+
+
         setTimeout(type, 50);
     }
     

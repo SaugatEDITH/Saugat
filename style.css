@@ -17,9 +17,12 @@ body {
 }
 
 /* Lock background scroll when chat is open */
+html.chat-open,
 body.chat-open {
-  overflow: hidden;
-  height: 100%;
+  overflow: hidden !important;
+  height: 100% !important;
+  position: fixed;
+  width: 100%;
 }
 
 
@@ -1301,6 +1304,43 @@ body::selection {
     to { opacity: 1; transform: translateY(0); }
 }
 
+/* Social / URL links rendered inside AI chat bubbles */
+.chat-msg a.chat-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 4px 10px;
+    margin: 3px 4px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #2d2e32;
+    background: #64f4ac;
+    border: 1px solid rgba(100, 244, 172, 0.6);
+    transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    vertical-align: middle;
+}
+
+.chat-msg a.chat-link:hover {
+    background: #fff;
+    color: #2d2e32;
+    transform: scale(1.05);
+}
+
+.chat-msg a.chat-link i {
+    font-size: 13px;
+}
+
+/* Wrapper so links inside AI messages wrap nicely */
+.chat-msg .chat-links-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+
 @media (max-width: 768px) {
 
     /* ---------- INPUT BAR (default/idle state) ---------- */
@@ -1312,9 +1352,11 @@ body::selection {
 
     /* ---------- INPUT BAR (active / fullscreen state) ---------- */
     #ai-chat-input-container.active-chat {
-        /* Pin the input bar to the very bottom, above the keyboard */
+        /* Pin the input bar to the very bottom, above the keyboard.
+           env(safe-area-inset-bottom) handles iOS home-bar notch. */
+        position: fixed;
         top: auto;
-        bottom: 0;
+        bottom: env(safe-area-inset-bottom, 0px);
         left: 0;
         right: 0;
         width: 100%;
@@ -1328,28 +1370,31 @@ body::selection {
         padding: 0 12px;
         height: 56px;
         /* Stay above the overlay so it's always reachable */
-        z-index: 1001;
+        z-index: 1002;
     }
 
     /* ---------- FULLSCREEN OVERLAY ---------- */
     #ai-chat-overlay {
-        /* Use dvh (dynamic viewport height) so it shrinks when the
-           mobile keyboard appears; fall back to 100vh for older browsers */
+        /* 100dvh shrinks when the mobile keyboard appears,
+           so the overlay never extends behind the keyboard */
         height: 100vh;
         height: 100dvh;
         padding: 0;
-        /* Flex column: chat history fills space, input bar is outside */
         flex-direction: column;
         justify-content: flex-start;
+        overflow: hidden;
     }
 
     /* ---------- CHAT HISTORY ---------- */
     #ai-chat-history {
-        /* Fill all space above the pinned input bar (56px) */
         flex: 1;
-        padding: 70px 12px 12px 12px; /* top gap clears the nav */
-        margin-bottom: 56px; /* room for the pinned input bar */
+        /* top padding clears the nav bar; bottom padding clears the pinned input */
+        padding: 70px 12px 70px 12px;
+        margin-bottom: 0;
         gap: 10px;
+        overflow-y: auto;
+        /* Prevent history from growing behind the keyboard */
+        max-height: calc(100dvh - 56px);
     }
 
     /* ---------- BUBBLE (minimized state) ---------- */
