@@ -4,4 +4,3 @@ node_modules/
 .env
 vercel-upload/
 ai/
-api/

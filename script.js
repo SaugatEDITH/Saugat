@@ -443,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
         } catch (error) {
             console.error('Chat error:', error);
-            appendAndSaveMessage('system', 'Connection failed. [System Note: Make sure the Vercel backend /api/chat is deployed and CORS/Tokens are configured]');
+            appendAndSaveMessage('system', '[CONNECTION ERROR] Unable to reach EDITH. Please try again in a moment.');
         } finally {
             isWaitingForResponse = false;
             // Reset spinner color
