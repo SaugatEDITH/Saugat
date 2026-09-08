@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Source+Code+Pro:wght@200;300;400;500;600;700;800;900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@100;200;300;400;500;600;700;800;900&family=Source+Code+Pro:wght@200;300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap");
 
 /* ---------- GLOBAL STYLING ---------- */
 * {
@@ -806,6 +806,43 @@ body::selection {
     width: 100%;
   }
 
+  .whoami-heading {
+    font-size: 26px !important;
+    margin-bottom: 16px;
+  }
+
+  .whoami-glass-card {
+    padding: 20px 16px;
+  }
+
+  .whoami-bio {
+    font-size: 13px !important;
+    text-align: left;
+    line-height: 1.65 !important;
+  }
+
+  .whoami-certs {
+    justify-content: center;
+    gap: 8px;
+    margin-top: 16px;
+  }
+
+  .whoami-cert-badge {
+    font-size: 11px;
+    padding: 6px 11px;
+  }
+
+  .whoami-highlights {
+    justify-content: center;
+    gap: 6px;
+    margin-top: 10px;
+  }
+
+  .whoami-pill {
+    font-size: 10px;
+    padding: 4px 10px;
+  }
+
 
 
   #introduction {
@@ -1032,6 +1069,186 @@ body::selection {
     flex-direction: column;
     gap: 2rem;
   }
+}
+
+/* ---------- WHO AM I – GLASSMORPHISM SECTION ---------- */
+
+.whoami-section {
+  position: relative;
+}
+
+.whoami-heading {
+  font-family: "Source Code Pro", monospace !important;
+  font-size: 36px !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  color: #fefefe !important;
+  line-height: 1.3 !important;
+  padding-top: 0 !important;
+  margin-bottom: 24px;
+}
+
+.whoami-accent {
+  color: #64f4ac;
+  font-weight: 900;
+  margin-right: 4px;
+}
+
+.whoami-cursor {
+  color: #64f4ac;
+  animation: whoami-blink 1s step-end infinite;
+}
+
+@keyframes whoami-blink {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0; }
+}
+
+/* --- Glassmorphism card --- */
+.whoami-glass-card {
+  position: relative;
+  background: rgba(45, 46, 50, 0.35);
+  border: 1px solid rgba(100, 244, 172, 0.15);
+  border-left: 3px solid rgba(100, 244, 172, 0.5);
+  border-radius: 16px;
+  padding: 24px 24px;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  overflow: hidden;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.whoami-glass-card:hover {
+  border-color: rgba(100, 244, 172, 0.35);
+  box-shadow:
+    0 12px 48px rgba(100, 244, 172, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Animated subtle glow blob */
+.whoami-glass-glow {
+  position: absolute;
+  top: -60%;
+  left: -30%;
+  width: 160%;
+  height: 160%;
+  background: radial-gradient(circle at 30% 40%, rgba(100, 244, 172, 0.08) 0%, transparent 60%);
+  pointer-events: none;
+  animation: whoami-glow-drift 8s ease-in-out infinite alternate;
+}
+
+@keyframes whoami-glow-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(15%, 10%) scale(1.1); }
+}
+
+/* --- Bio text --- */
+.whoami-bio {
+  font-family: "Inter", "Raleway", sans-serif !important;
+  font-size: 14.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.75 !important;
+  color: #d1d5db !important;
+  margin: 0 0 10px 0 !important;
+  padding: 0 !important;
+  text-align: justify;
+  position: relative;
+  z-index: 1;
+}
+
+.whoami-bio:last-child {
+  margin-bottom: 0 !important;
+}
+
+.whoami-bio strong {
+  color: #fefefe;
+  font-weight: 600;
+}
+
+.whoami-bio em {
+  color: #64f4ac;
+  font-style: italic;
+}
+
+/* --- Certification badges --- */
+.whoami-certs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.whoami-cert-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: 999px;
+  font-family: "Source Code Pro", monospace;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: #020617;
+  background: linear-gradient(135deg, #64f4ac, #22c55e);
+  box-shadow: 0 2px 12px rgba(100, 244, 172, 0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.whoami-cert-badge::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.35), transparent);
+  transition: left 0.5s ease;
+}
+
+.whoami-cert-badge:hover::before {
+  left: 100%;
+}
+
+.whoami-cert-badge:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(100, 244, 172, 0.45);
+}
+
+.whoami-cert-badge i {
+  font-size: 13px;
+}
+
+/* --- Skill highlight pills --- */
+.whoami-highlights {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.whoami-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(100, 244, 172, 0.25);
+  background: rgba(100, 244, 172, 0.06);
+  color: #a5f3c8;
+  font-family: "Source Code Pro", monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  transition: all 0.25s ease;
+}
+
+.whoami-pill:hover {
+  background: rgba(100, 244, 172, 0.15);
+  border-color: rgba(100, 244, 172, 0.5);
+  color: #fefefe;
+  transform: translateY(-1px);
 }
 
 /* ---------- AI CHAT UI ---------- */
