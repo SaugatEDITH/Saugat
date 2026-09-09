@@ -1038,7 +1038,7 @@ class Terminal {
         
         whoami: () => {
             this.addLine('Saugat Pokharel', 'success');
-            this.addLine('Security Enthusiast | Full-Stack Developer | BCA Student', 'info');
+            this.addLine('Penetration Tester | Security Researcher | Fullstack Software Engineer', 'info');
         },
 
         sudo: () => {
@@ -1107,8 +1107,8 @@ class Terminal {
 
         cat: (args) => {
             const files = {
-                'README.md': 'Saugat\'s Portfolio Terminal\n=====================================\nA unique terminal-based portfolio showcasing my skills in web development and cybersecurity.\n\nFeatures:\n- Interactive terminal interface\n- Multiple command support\n- Real-time project information\n- Easter eggs and fun commands',
-                'portfolio.json': '{\n  "name": "Saugat Pokharel",\n  "title": "Full-Stack Developer & Security Enthusiast",\n  "skills": ["Python", "JavaScript", "Django", "Cybersecurity"],\n  "projects": 4,\n  "certifications": 7\n}'
+                'README.md': 'Saugat\'s Portfolio Terminal\n=====================================\nA unique terminal-based portfolio showcasing my skills in offensive security, penetration testing, and full-stack software engineering.\n\nFeatures:\n- Interactive terminal interface\n- Multiple command support\n- Real-time project information\n- Easter eggs and fun commands',
+                'portfolio.json': '{\n  "name": "Saugat Pokharel",\n  "title": "Independent Penetration Tester, Security Researcher & Fullstack Software Engineer",\n  "role": "Independent / Self-Employed",\n  "skills": ["Penetration Testing", "Offensive Security", "Security Research", "LLM Red Teaming", "Python", "Django", "JavaScript", "TypeScript", "Flutter", "Cybersecurity"],\n  "credentials": ["CLLMSE", "EHE", "Google Digital Marketing"],\n  "education": "BCA Graduate, Tribhuvan University",\n  "projects": 7,\n  "certifications": 5\n}'
             };
             if (args === 'resume.pdf') {
                 this.addLine('PDF-1.4\n%\n1 0 obj\n<<\n/Title ()\n/Creator ()\n/Producer ()\n/CreationDate ()\n>>\nendobj\n...', 'error');
@@ -1365,15 +1365,20 @@ class Terminal {
             this.addLine('║          ABOUT SAUGAT POKHAREL            ║', 'info');
             this.addLine('╚════════════════════════════════════════════╝', 'info');
             this.addLine('', 'output');
-            this.addLine('I am a BCA student at Tribhuvan University with a passion for', 'output');
-            this.addLine('understanding how technology works beneath the surface.', 'output');
+            this.addLine('I am an independent penetration tester, security researcher,', 'output');
+            this.addLine('and full-stack software engineer based in Nepal.', 'output');
+            this.addLine('BCA graduate from Tribhuvan University with a passion for', 'output');
+            this.addLine('offensive security, LLM red teaming, and secure software design.', 'output');
             this.addLine('', 'output');
-            this.addLine('My journey started with streaming tech content and hands-on exploration.', 'output');
-            this.addLine('I have developed expertise in:', 'output');
-            this.addLine('  • Web Development (Python, Django, JavaScript, HTML, CSS)', 'success');
-            this.addLine('  • Cybersecurity & Network Security', 'success');
-            this.addLine('  • Full-Stack Development', 'success');
-            this.addLine('  • Ethical Hacking & Penetration Testing', 'success');
+            this.addLine('Credentials: CLLMSE (Certified LLM Security Expert),', 'output');
+            this.addLine('EHE (Ethical Hacking Essentials), Google Digital Marketing.', 'output');
+            this.addLine('', 'output');
+            this.addLine('Core expertise:', 'output');
+            this.addLine('  • Offensive Security & Penetration Testing', 'success');
+            this.addLine('  • Security Research & Vulnerability Discovery', 'success');
+            this.addLine('  • LLM Red Teaming & AI Security', 'success');
+            this.addLine('  • Full-Stack Development (Django, JavaScript, Python)', 'success');
+            this.addLine('  • Mobile & Cross-Platform Development (Flutter)', 'success');
             this.addLine('', 'output');
             this.addLine('Outside tech: Trekking, Gaming, Tech Trends', 'warning');
         },

@@ -438,7 +438,12 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.style.top = '';
             window.scrollTo(0, savedScrollY);
             chatInput.blur();
-            checkScroll(); // Re-apply bubble state if needed
+            // scrollTo is asynchronous in most browsers — schedule on both
+            // next frame AND a setTimeout fallback to guarantee re-evaluation
+            requestAnimationFrame(() => {
+                checkScroll();
+                setTimeout(checkScroll, 0);
+            });
         }
     }
 
@@ -452,18 +457,60 @@ document.addEventListener('DOMContentLoaded', () => {
     chatInput.addEventListener('focus', handleInputClick);
     chatInput.addEventListener('click', handleInputClick);
     closeBtn.addEventListener('click', closeChat);
-    // Toggle bubble state on scroll
-    function checkScroll() {
-        if (isChatActive) return; // Don't minimize if chat is active
-        if (window.scrollY > 150) {
+
+    // ─── Robust Scroll → Bubble State Manager ────────────────────────────
+    // Races fixed:
+    //   • passive scroll events can be coalesced → never fire exactly at 150
+    //   • Safari/Firefox sometimes drop passive listeners during GPU layers
+    //   • focus/focusout from document elements can fire after user stops
+    //   • body/chat-open fixed positioning can leave scrollY stale after close
+    const BUBBLE_THRESHOLD = 150;
+    let lastAppliedBubbleState = null; // null | true | false
+    let rafScheduled = false;
+
+    function applyBubbleState(shouldBeBubble, { force = false } = {}) {
+        if (!force && shouldBeBubble === lastAppliedBubbleState) return;
+        lastAppliedBubbleState = shouldBeBubble;
+
+        if (isChatActive) {
+            chatContainer.classList.remove('minimized-bubble');
+            return;
+        }
+        if (shouldBeBubble) {
             chatContainer.classList.add('minimized-bubble');
         } else {
             chatContainer.classList.remove('minimized-bubble');
         }
     }
-    
+
+    function checkScroll() {
+        if (rafScheduled) return;
+        rafScheduled = true;
+        // rAF syncs with compositor so scrollY is fresh across every browser
+        requestAnimationFrame(() => {
+            rafScheduled = false;
+            const y = window.scrollY || window.pageYOffset || 0;
+            applyBubbleState(y > BUBBLE_THRESHOLD);
+        });
+    }
+
+    // Multi-event coverage: scroll + wheel + touch + resize = no browser left behind
     window.addEventListener('scroll', checkScroll, { passive: true });
-    
+    window.addEventListener('wheel',  checkScroll, { passive: true });
+    window.addEventListener('touchmove', checkScroll, { passive: true });
+    window.addEventListener('resize', checkScroll);
+
+    // Page starts mid-scroll (e.g., browser back/restore) → correct immediately
+    document.addEventListener('DOMContentLoaded', checkScroll, { once: true });
+    window.addEventListener('pageshow', () => { applyBubbleState(null, { force: false }); checkScroll(); });
+
+    // Any document-level blur (user clicked in chat then clicked away) → re-evaluate
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') checkScroll();
+    });
+
+    // ─────────────────────────────────────────────────────────────────────
+
     // If clicking on container when it's a bubble, activate chat
     chatContainer.addEventListener('click', (e) => {
         if (chatContainer.classList.contains('minimized-bubble')) {
